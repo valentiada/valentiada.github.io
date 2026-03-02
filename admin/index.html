@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>Адмінка — Гроно любові</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; background: #f5f0eb; color: #2c2c2c; line-height: 1.5; }
+    .layout { display: flex; min-height: 100vh; }
+    .sidebar { width: 340px; min-width: 300px; padding: 24px; background: #fff; border-right: 1px solid #e0d9d2; overflow-y: auto; }
+    .main { flex: 1; padding: 24px; overflow-y: auto; }
+    h1 { font-size: 1.25rem; margin: 0 0 20px; color: #8B1538; }
+    h2 { font-size: 1rem; margin: 20px 0 10px; font-weight: 600; }
+    .step { margin-bottom: 16px; padding: 12px; background: #faf8f6; border-radius: 8px; border-left: 3px solid #8B1538; }
+    .step strong { display: block; margin-bottom: 4px; }
+    .step span { font-size: 0.9rem; color: #555; }
+    label { display: block; margin-bottom: 4px; font-size: 0.85rem; font-weight: 500; }
+    input[type="text"], input[type="password"], textarea { width: 100%; padding: 8px 10px; border: 1px solid #d0c8c0; border-radius: 6px; font-size: 14px; margin-bottom: 12px; }
+    textarea { min-height: 80px; resize: vertical; }
+    button { padding: 10px 16px; border-radius: 6px; font-size: 14px; cursor: pointer; border: none; }
+    .btn-primary { background: #8B1538; color: #fff; }
+    .btn-primary:hover { background: #70122e; }
+    .btn-secondary { background: #e8e2dc; color: #333; margin-left: 8px; }
+    .btn-secondary:hover { background: #ddd6ce; }
+    .info-box { font-size: 0.85rem; color: #555; background: #faf8f6; padding: 12px; border-radius: 8px; margin: 12px 0; }
+    .info-box strong { color: #333; }
+    .repo-row { font-size: 0.8rem; margin: 4px 0; word-break: break-all; }
+    .editor-card { background: #fff; border-radius: 8px; padding: 24px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .editor-card h2 { margin-top: 0; }
+    .section-select { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 20px; }
+    select { padding: 8px 12px; border: 1px solid #d0c8c0; border-radius: 6px; font-size: 14px; min-width: 160px; }
+    .field { margin-bottom: 16px; }
+    .drop-zone { border: 2px dashed #c0b8b0; border-radius: 8px; padding: 32px; text-align: center; background: #faf8f6; margin: 12px 0; cursor: pointer; transition: background .2s; }
+    .drop-zone:hover, .drop-zone.dragover { background: #f0ebe6; border-color: #8B1538; }
+    .drop-zone input { display: none; }
+    .url-output { margin-top: 12px; }
+    .url-output input { font-size: 0.85rem; }
+    .status { margin-top: 12px; padding: 8px 12px; border-radius: 6px; font-size: 0.9rem; }
+    .status.success { background: #e8f5e9; color: #2e7d32; }
+    .status.error { background: #ffebee; color: #c62828; }
+    .status.info { background: #e3f2fd; color: #1565c0; }
+    .mb-0 { margin-bottom: 0; }
+    .mt-16 { margin-top: 16px; }
+    @media (max-width: 900px) { .layout { flex-direction: column; } .sidebar { width: 100%; border-right: none; border-bottom: 1px solid #e0d9d2; } }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <h1>Адмінка — Гроно любові</h1>
+
+      <h2>Крок 1: Завантажити контент</h2>
+      <div class="step">
+        <strong>Вставте GitHub Token і натисніть «Завантажити з GitHub».</strong>
+        <span>Токен потрібен з правами Contents: Read and write.</span>
+      </div>
+      <label>GitHub Token</label>
+      <input type="password" id="token" placeholder="ghp_..." autocomplete="off" />
+      <button type="button" class="btn-primary" id="btnLoad">Завантажити з GitHub</button>
+
+      <h2>Крок 2: Редагувати</h2>
+      <div class="step">
+        <strong>Оберіть розділ у випадаючому списку і змініть поля справа.</strong>
+      </div>
+
+      <h2>Крок 3: Зберегти</h2>
+      <div class="step">
+        <strong>Натисніть «Зберегти в GitHub».</strong>
+        <span>Сайт оновиться після деплою на GitHub Pages.</span>
+      </div>
+      <button type="button" class="btn-primary mt-16" id="btnSave">Зберегти в GitHub</button>
+
+      <h2>Що важливо</h2>
+      <div class="info-box">
+        <strong>GitHub Token</strong> обовʼязковий: створіть у GitHub → Settings → Developer settings → Personal access tokens з доступом <em>Contents: Read and write</em>.
+        <br><br>
+        Далі: «Завантажити з GitHub» → редагуйте справа (Сайт, Hero, Про нас, Футер) → «Зберегти в GitHub».
+        <br><br>
+        Фото: можна вказати URL у полях зображень або завантажити файл нижче — він збережеться в <code>images/uploads</code>.
+      </div>
+
+      <h2>Репозиторій</h2>
+      <div class="info-box repo-row">
+        <strong>Репозиторій:</strong> <span id="repoDisplay">valentiada / valentiada.github.io</span><br>
+        <strong>Ветка:</strong> <span id="branchDisplay">main</span><br>
+        <strong>Файл контенту:</strong> <span id="pathDisplay">content/site-content.json</span><br>
+        <strong>Папка для фото:</strong> <span id="photoFolderDisplay">images/uploads</span><br>
+        <strong>Сайт:</strong> <a href="https://gronoliubovi.fun/" target="_blank" rel="noopener">https://gronoliubovi.fun/</a><br>
+        <strong>Адмінка:</strong> <a href="https://gronoliubovi.fun/admin/" target="_blank" rel="noopener">https://gronoliubovi.fun/admin/</a>
+      </div>
+
+      <label><input type="checkbox" id="autoLoad" checked /> Автозавантаження при відкритті (якщо є токен)</label>
+    </aside>
+
+    <main class="main">
+      <div class="editor-card">
+        <h2>Візуальний редактор</h2>
+        <p class="mb-0" style="color:#666;font-size:0.9rem;">Оберіть розділ і змініть поля. Зміни збережуться лише після натискання «Зберегти в GitHub».</p>
+
+        <div class="section-select">
+          <label class="field" style="margin-bottom:0;">Розділ</label>
+          <select id="section">
+            <option value="site">Сайт (meta)</option>
+            <option value="hero">Hero</option>
+            <option value="about">Про нас</option>
+            <option value="footer">Футер</option>
+          </select>
+        </div>
+
+        <div id="editorFields"></div>
+        <div id="editorStatus" class="status" style="display:none;"></div>
+      </div>
+
+      <div class="editor-card">
+        <h2>Завантаження фото в GitHub</h2>
+        <p style="color:#666;font-size:0.9rem;">Перетягніть зображення сюди або оберіть файл. Після завантаження URL можна вставити в поле зображення поточного розділу.</p>
+        <div class="drop-zone" id="dropZone">
+          <input type="file" id="fileInput" accept="image/*" />
+          <p style="margin:0;">Перетягніть фото сюди або натисніть, щоб обрати файл</p>
+          <button type="button" class="btn-secondary" style="margin-top:12px;">Обрати файл</button>
+        </div>
+        <div class="url-output">
+          <label>URL для вставки (працює після деплою)</label>
+          <input type="text" id="uploadedUrl" readonly placeholder="URL зʼявиться після завантаження" />
+          <button type="button" class="btn-secondary" id="btnInsertUrl">Вставити в поле зображення</button>
+        </div>
+        <div id="uploadStatus" class="status" style="display:none;"></div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+(function () {
+  var DEFAULT = {
+    owner: 'valentiada',
+    repo: 'valentiada.github.io',
+    branch: 'main',
+    contentPath: 'content/site-content.json',
+    photoFolder: 'images/uploads',
+    siteUrl: 'https://gronoliubovi.fun/'
+  };
+
+  var defaultContent = {
+    site: { title: 'Гроно любові | Крафтова мануфактура — Поділля', description: 'Гроно любові — крафтова мануфактура на Поділлі: виноградний сік, мед, лаванда, трав\'яні мікси, чаї, саджанці. Дегустації та фотосесії.', ogTitle: 'Гроно любові | Крафтова мануфактура — Поділля' },
+    hero: { title: 'Гроно любові', subtitle: 'Крафтова мануфактура на Поділлі: виноградний сік, мед, лаванда, трав\'яні мікси, чаї, саджанці. Дегустації та фотосесії.', image: '/images/grapes-vine-closeup.png', ctaText: 'Перейти до контенту' },
+    about: { title: 'Про нас', body: 'Ми — крафтова мануфактура на Поділлі. Вирощуємо виноград, лаванду, збираємо мед, готуємо трав\'яні мікси та чаї. Запрошуємо на дегустації та фотосесії.', image: '/images/beekeeper-honeycomb-sky.png' },
+    footer: { telegramUrl: 'https://t.me/gronoliubovi', footerText: 'Гроно любові — Поділля. Зв\'яжіться з нами через Telegram.', contactLine: 'Поділля, Україна' }
+  };
+
+  var config = { owner: DEFAULT.owner, repo: DEFAULT.repo, branch: DEFAULT.branch, contentPath: DEFAULT.contentPath, photoFolder: DEFAULT.photoFolder };
+  var data = JSON.parse(JSON.stringify(defaultContent));
+  var contentSha = null;
+
+  function getToken() { return document.getElementById('token').value.trim(); }
+  function apiUrl(path) { return 'https://api.github.com/repos/' + config.owner + '/' + config.repo + '/contents/' + path + '?ref=' + encodeURIComponent(config.branch); }
+
+  function showStatus(elId, text, type) {
+    var el = document.getElementById(elId);
+    el.style.display = 'block';
+    el.className = 'status ' + (type || 'info');
+    el.textContent = text;
+  }
+
+  function renderFields() {
+    var section = document.getElementById('section').value;
+    var html = '';
+    var s = data[section] || {};
+    if (section === 'site') {
+      html += '<div class="field"><label>Заголовок сайту (title)</label><input type="text" id="f_title" value="' + escapeAttr(s.title) + '" /></div>';
+      html += '<div class="field"><label>Опис (meta description)</label><textarea id="f_description">' + escapeHtml(s.description || '') + '</textarea></div>';
+      html += '<div class="field"><label>OG заголовок</label><input type="text" id="f_ogTitle" value="' + escapeAttr(s.ogTitle) + '" /></div>';
+    } else if (section === 'hero') {
+      html += '<div class="field"><label>Заголовок</label><input type="text" id="f_title" value="' + escapeAttr(s.title) + '" /></div>';
+      html += '<div class="field"><label>Підзаголовок</label><textarea id="f_subtitle">' + escapeHtml(s.subtitle || '') + '</textarea></div>';
+      html += '<div class="field"><label>URL зображення</label><input type="text" id="f_image" value="' + escapeAttr(s.image) + '" placeholder="/images/..." /></div>';
+      html += '<div class="field"><label>Текст кнопки</label><input type="text" id="f_ctaText" value="' + escapeAttr(s.ctaText) + '" /></div>';
+    } else if (section === 'about') {
+      html += '<div class="field"><label>Заголовок</label><input type="text" id="f_title" value="' + escapeAttr(s.title) + '" /></div>';
+      html += '<div class="field"><label>Текст</label><textarea id="f_body" style="min-height:120px">' + escapeHtml(s.body || '') + '</textarea></div>';
+      html += '<div class="field"><label>URL зображення</label><input type="text" id="f_image" value="' + escapeAttr(s.image) + '" placeholder="/images/..." /></div>';
+    } else if (section === 'footer') {
+      html += '<div class="field"><label>Посилання на Telegram</label><input type="text" id="f_telegramUrl" value="' + escapeAttr(s.telegramUrl) + '" /></div>';
+      html += '<div class="field"><label>Текст у футері</label><textarea id="f_footerText">' + escapeHtml(s.footerText || '') + '</textarea></div>';
+      html += '<div class="field"><label>Контактний рядок (адреса)</label><input type="text" id="f_contactLine" value="' + escapeAttr(s.contactLine) + '" /></div>';
+    }
+    document.getElementById('editorFields').innerHTML = html;
+  }
+  function escapeAttr(s) { return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function escapeHtml(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+  function collectFields() {
+    var section = document.getElementById('section').value;
+    var s = data[section] || {};
+    if (section === 'site') {
+      s.title = document.getElementById('f_title').value.trim();
+      s.description = document.getElementById('f_description').value.trim();
+      s.ogTitle = document.getElementById('f_ogTitle').value.trim();
+    } else if (section === 'hero') {
+      s.title = document.getElementById('f_title').value.trim();
+      s.subtitle = document.getElementById('f_subtitle').value.trim();
+      s.image = document.getElementById('f_image').value.trim();
+      s.ctaText = document.getElementById('f_ctaText').value.trim();
+    } else if (section === 'about') {
+      s.title = document.getElementById('f_title').value.trim();
+      s.body = document.getElementById('f_body').value.trim();
+      s.image = document.getElementById('f_image').value.trim();
+    } else if (section === 'footer') {
+      s.telegramUrl = document.getElementById('f_telegramUrl').value.trim();
+      s.footerText = document.getElementById('f_footerText').value.trim();
+      s.contactLine = document.getElementById('f_contactLine').value.trim();
+    }
+    data[section] = s;
+  }
+
+  document.getElementById('section').addEventListener('change', function () {
+    collectFields();
+    renderFields();
+  });
+
+  function loadFromGitHub() {
+    var token = getToken();
+    if (!token) { showStatus('editorStatus', 'Вставте GitHub Token і натисніть «Завантажити з GitHub».', 'error'); return; }
+    showStatus('editorStatus', 'Завантаження…', 'info');
+    fetch(apiUrl(config.contentPath), { headers: { 'Authorization': 'token ' + token, 'Accept': 'application/vnd.github.v3+json' } })
+      .then(function (r) {
+        if (r.status === 404) {
+          data = JSON.parse(JSON.stringify(defaultContent));
+          contentSha = null;
+          renderFields();
+          showStatus('editorStatus', 'Файл ще не існує в репо. Редагуйте і натисніть «Зберегти в GitHub».', 'info');
+          return;
+        }
+        if (!r.ok) throw new Error(r.status + ' ' + r.statusText);
+        return r.json();
+      })
+      .then(function (json) {
+        if (!json) return;
+        try {
+          var decoded = atob(json.content.replace(/\n/g, ''));
+          data = JSON.parse(decoded);
+          contentSha = json.sha;
+          renderFields();
+          showStatus('editorStatus', 'Контент завантажено з GitHub.', 'success');
+        } catch (e) {
+          showStatus('editorStatus', 'Помилка читання файлу: ' + e.message, 'error');
+        }
+      })
+      .catch(function (err) {
+        showStatus('editorStatus', 'Помилка: ' + err.message, 'error');
+      });
+  }
+
+  function saveToGitHub() {
+    var token = getToken();
+    if (!token) { showStatus('editorStatus', 'Вставте GitHub Token.', 'error'); return; }
+    collectFields();
+    showStatus('editorStatus', 'Збереження…', 'info');
+    var body = { message: 'Оновлення контенту з адмінки', content: btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2)))), branch: config.branch };
+    if (contentSha) body.sha = contentSha;
+    fetch(apiUrl(config.contentPath), {
+      method: 'PUT',
+      headers: { 'Authorization': 'token ' + token, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    })
+      .then(function (r) {
+        if (!r.ok) return r.json().then(function (j) { throw new Error(j.message || r.statusText); });
+        return r.json();
+      })
+      .then(function (json) {
+        contentSha = json.content.sha;
+        showStatus('editorStatus', 'Збережено в GitHub. Сайт оновиться після деплою.', 'success');
+      })
+      .catch(function (err) {
+        showStatus('editorStatus', 'Помилка: ' + err.message, 'error');
+      });
+  }
+
+  document.getElementById('btnLoad').addEventListener('click', loadFromGitHub);
+  document.getElementById('btnSave').addEventListener('click', saveToGitHub);
+
+  var dropZone = document.getElementById('dropZone');
+  var fileInput = document.getElementById('fileInput');
+  dropZone.addEventListener('click', function () { fileInput.click(); });
+  dropZone.addEventListener('dragover', function (e) { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', function () { dropZone.classList.remove('dragover'); });
+  dropZone.addEventListener('drop', function (e) {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    var file = e.dataTransfer.files[0];
+    if (file && file.type.indexOf('image/') === 0) uploadImage(file);
+  });
+  fileInput.addEventListener('change', function () {
+    var file = fileInput.files[0];
+    if (file) uploadImage(file);
+    fileInput.value = '';
+  });
+
+  function uploadImage(file) {
+    var token = getToken();
+    if (!token) { showStatus('uploadStatus', 'Вставте GitHub Token.', 'error'); return; }
+    var ext = (file.name.match(/\.(\w+)$/) || [])[1] || 'jpg';
+    var name = 'img-' + Date.now() + '.' + ext.toLowerCase();
+    var path = config.photoFolder + '/' + name;
+    showStatus('uploadStatus', 'Завантаження…', 'info');
+    var reader = new FileReader();
+    reader.onload = function () {
+      var base64 = reader.result.split(',')[1];
+      fetch(apiUrl(path), {
+        method: 'PUT',
+        headers: { 'Authorization': 'token ' + token, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: 'Фото з адмінки', content: base64, branch: config.branch })
+      })
+        .then(function (r) {
+          if (!r.ok) return r.json().then(function (j) { throw new Error(j.message || r.statusText); });
+          var url = DEFAULT.siteUrl + path.replace(/^\/+/, '');
+          document.getElementById('uploadedUrl').value = '/' + path;
+          showStatus('uploadStatus', 'Файл завантажено. URL для вставки: /' + path, 'success');
+        })
+        .catch(function (err) { showStatus('uploadStatus', 'Помилка: ' + err.message, 'error'); });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  document.getElementById('btnInsertUrl').addEventListener('click', function () {
+    var url = document.getElementById('uploadedUrl').value.trim();
+    var imgField = document.getElementById('f_image');
+    if (imgField) { imgField.value = url; showStatus('editorStatus', 'URL вставлено в поле зображення.', 'success'); }
+  });
+
+  renderFields();
+  document.getElementById('repoDisplay').textContent = config.owner + ' / ' + config.repo;
+  document.getElementById('branchDisplay').textContent = config.branch;
+  document.getElementById('pathDisplay').textContent = config.contentPath;
+  document.getElementById('photoFolderDisplay').textContent = config.photoFolder;
+
+  if (document.getElementById('autoLoad').checked) {
+    try {
+      var saved = localStorage.getItem('gronoliubovi_admin_token');
+      if (saved) { document.getElementById('token').value = saved; loadFromGitHub(); }
+    } catch (e) {}
+  }
+  document.getElementById('token').addEventListener('input', function () {
+    try {
+      var t = document.getElementById('token').value;
+      if (t) localStorage.setItem('gronoliubovi_admin_token', t);
+      else localStorage.removeItem('gronoliubovi_admin_token');
+    } catch (e) {}
+  });
+})();
+  </script>
+</body>
+</html>
