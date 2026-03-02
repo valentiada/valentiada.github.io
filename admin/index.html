@@ -56,6 +56,7 @@
     .field-with-preview { display: flex; gap: 12px; align-items: flex-start; }
     .field-with-preview input { flex: 1; }
     .img-preview { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #e0d9d2; background: #f5f0eb; }
+    .img-preview-lg { width: 100%; max-width: 280px; max-height: 180px; object-fit: cover; border-radius: 8px; border: 1px solid #e0d9d2; background: #f5f0eb; }
     .drop-zone { border: 2px dashed #c0b8b0; border-radius: 8px; padding: 28px; text-align: center; background: #faf8f6; margin: 12px 0; cursor: pointer; transition: background .2s; }
     .drop-zone:hover, .drop-zone.dragover { background: #f0ebe6; border-color: #8B1538; }
     .drop-zone input { display: none; }
@@ -87,7 +88,16 @@
     .raw-json { font-family: monospace; font-size: 12px; min-height: 200px; }
     .item-block { border: 1px solid #e0d9d2; border-radius: 8px; padding: 12px; margin-bottom: 12px; background: #faf8f6; position: relative; }
     .item-block .remove-item { position: absolute; top: 8px; right: 8px; padding: 4px 8px; font-size: 12px; }
+    .item-block .field-with-preview { display: flex; gap: 12px; align-items: flex-start; }
+    .item-block .field-with-preview input { flex: 1; }
+    .item-block .img-preview { width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #e0d9d2; background: #f5f0eb; flex-shrink: 0; }
     .add-item-btn { margin-top: 8px; }
+    .quick-assign { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .quick-assign .btn-primary { margin: 0; }
+    .paste-url-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+    .paste-url-row input { flex: 1; min-width: 200px; margin: 0; }
+    .upload-thumb { width: 48px; height: 48px; object-fit: cover; border-radius: 6px; flex-shrink: 0; }
+    .upload-item { align-items: flex-start; }
     @media (max-width: 900px) { .layout { flex-direction: column; } .sidebar { width: 100%; border-right: none; border-bottom: 1px solid #e0d9d2; } }
   </style>
 </head>
@@ -191,14 +201,22 @@
 
           <div class="editor-card">
             <h2>Медіа: завантаження фото</h2>
-            <p style="color:#666;font-size:0.9rem;margin-bottom:12px;">Перетягніть кілька фото сюди або натисніть і оберіть файли. Після завантаження натисніть «Вставити в Hero» або «Вставити в Про нас».</p>
+            <p style="color:#666;font-size:0.9rem;margin-bottom:12px;"><strong>Як додати нове фото:</strong><br>1) Завантажте файл (перетягніть сюди або натисніть зону) — воно збережеться в репозиторій.<br>2) Натисніть «Використати для Hero» або «Використати для Про нас» — фото одразу підставиться в обраний розділ.<br>3) Натисніть «Зберегти в GitHub» у бічній панелі — зміни зʼявляться на сайті після деплою.</p>
             <div class="drop-zone" id="dropZone">
               <input type="file" id="fileInput" accept="image/*" multiple />
               <p style="margin:0;">Перетягніть фото сюди або натисніть, щоб обрати файли</p>
-              <span class="hint">Підтримуються JPG, PNG, WebP, GIF. Можна вибрати кілька файлів.</span>
+              <span class="hint">JPG, PNG, WebP, GIF. Можна кілька файлів одразу.</span>
+            </div>
+            <div class="field mt-16">
+              <label>Або вставте посилання на фото (URL)</label>
+              <div class="paste-url-row">
+                <input type="text" id="pasteImageUrl" placeholder="https://... або /images/файл.jpg" />
+                <button type="button" class="btn-secondary btn-small" id="btnUseUrlHero">Використати для Hero</button>
+                <button type="button" class="btn-secondary btn-small" id="btnUseUrlAbout">Використати для Про нас</button>
+              </div>
             </div>
             <div class="recent-uploads" id="recentUploads" style="display:none;">
-              <h3>Останні завантаження</h3>
+              <h3>Останні завантаження — натисніть, куди вставити</h3>
               <div id="recentUploadsList"></div>
             </div>
             <div id="uploadStatus" class="status" style="display:none;"></div>
@@ -364,6 +382,7 @@
     return DEFAULT.siteUrl.replace(/\/$/, '') + (url.startsWith('/') ? url : '/' + url);
   }
 
+  // Відмальовування полів редактора для обраного розділу; після рендеру оновлюємо currentSection і встановлюємо превʼю зображень
   function renderFields() {
     var section = document.getElementById('section').value;
     var html = '';
@@ -377,12 +396,12 @@
     } else if (section === 'hero') {
       html += '<div class="field"><label>Заголовок</label><input type="text" id="f_title" value="' + escapeAttr(s.title) + '" /></div>';
       html += '<div class="field"><label>Підзаголовок</label><textarea id="f_subtitle">' + escapeHtml(s.subtitle || '') + '</textarea></div>';
-      html += '<div class="field"><label>URL зображення</label><div class="field-with-preview"><input type="text" id="f_image" value="' + escapeAttr(s.image) + '" placeholder="/images/..." /><img class="img-preview" id="f_image_preview" src="' + escapeAttr(imgPreviewSrc(s.image)) + '" alt="" onerror="this.style.display=\'none\'" /></div></div>';
+      html += '<div class="field"><label>URL зображення Hero</label><div class="field-with-preview"><input type="text" id="f_image" value="' + escapeAttr(s.image) + '" placeholder="/images/..." /><img class="img-preview img-preview-lg" id="f_image_preview" src="' + escapeAttr(imgPreviewSrc(s.image)) + '" alt="" onerror="this.style.display=\'none\'" /></div></div>';
       html += '<div class="field"><label>Текст кнопки</label><input type="text" id="f_ctaText" value="' + escapeAttr(s.ctaText) + '" /></div>';
     } else if (section === 'about') {
       html += '<div class="field"><label>Заголовок</label><input type="text" id="f_title" value="' + escapeAttr(s.title) + '" /></div>';
       html += '<div class="field"><label>Текст</label><textarea id="f_body" style="min-height:120px">' + escapeHtml(s.body || '') + '</textarea></div>';
-      html += '<div class="field"><label>URL зображення</label><div class="field-with-preview"><input type="text" id="f_image" value="' + escapeAttr(s.image) + '" placeholder="/images/..." /><img class="img-preview" id="f_image_preview" src="' + escapeAttr(imgPreviewSrc(s.image)) + '" alt="" onerror="this.style.display=\'none\'" /></div></div>';
+      html += '<div class="field"><label>URL зображення блоку</label><div class="field-with-preview"><input type="text" id="f_image" value="' + escapeAttr(s.image) + '" placeholder="/images/..." /><img class="img-preview img-preview-lg" id="f_image_preview" src="' + escapeAttr(imgPreviewSrc(s.image)) + '" alt="" onerror="this.style.display=\'none\'" /></div></div>';
     } else if (section === 'footer') {
       html += '<div class="field"><label>Посилання на Telegram</label><input type="text" id="f_telegramUrl" value="' + escapeAttr(s.telegramUrl) + '" /></div>';
       html += '<div class="field"><label>Текст у футері</label><textarea id="f_footerText">' + escapeHtml(s.footerText || '') + '</textarea></div>';
@@ -391,11 +410,12 @@
       var list = Array.isArray(s) ? s : [];
       list.forEach(function (p, i) {
         p = p || {};
+        var imgSrc = imgPreviewSrc(p.image);
         html += '<div class="item-block" data-index="' + i + '"><button type="button" class="btn-secondary btn-small remove-item">Видалити</button>';
+        html += '<div class="field"><label>Фото товару</label><div class="field-with-preview"><input type="text" id="f_product_' + i + '_image" value="' + escapeAttr(p.image) + '" placeholder="/images/..." /><img class="img-preview" id="f_product_' + i + '_image_preview" src="' + escapeAttr(imgSrc) + '" alt="" onerror="this.style.display=\'none\'" /></div></div>';
         html += '<div class="field"><label>Назва</label><input type="text" id="f_product_' + i + '_title" value="' + escapeAttr(p.title) + '" /></div>';
         html += '<div class="field"><label>Опис</label><textarea id="f_product_' + i + '_description">' + escapeHtml(p.description || '') + '</textarea></div>';
         html += '<div class="field"><label>Ціна</label><input type="text" id="f_product_' + i + '_price" value="' + escapeAttr(p.price) + '" /></div>';
-        html += '<div class="field"><label>URL зображення</label><input type="text" id="f_product_' + i + '_image" value="' + escapeAttr(p.image) + '" /></div>';
         html += '<div class="field"><label>Порядок</label><input type="number" id="f_product_' + i + '_order" value="' + (p.order != null ? p.order : i) + '" style="width:80px" /></div></div>';
       });
       html += '<button type="button" class="btn-secondary add-item-btn" id="btnAddProduct">+ Додати товар</button>';
@@ -403,8 +423,9 @@
       var list = Array.isArray(s) ? s : [];
       list.forEach(function (g, i) {
         g = g || {};
+        var imgSrc = imgPreviewSrc(g.image);
         html += '<div class="item-block" data-index="' + i + '"><button type="button" class="btn-secondary btn-small remove-item">Видалити</button>';
-        html += '<div class="field"><label>URL зображення</label><input type="text" id="f_gallery_' + i + '_image" value="' + escapeAttr(g.image) + '" /></div>';
+        html += '<div class="field"><label>Фото</label><div class="field-with-preview"><input type="text" id="f_gallery_' + i + '_image" value="' + escapeAttr(g.image) + '" placeholder="/images/..." /><img class="img-preview" id="f_gallery_' + i + '_image_preview" src="' + escapeAttr(imgSrc) + '" alt="" onerror="this.style.display=\'none\'" /></div></div>';
         html += '<div class="field"><label>Підпис</label><input type="text" id="f_gallery_' + i + '_caption" value="' + escapeAttr(g.caption) + '" /></div></div>';
       });
       html += '<button type="button" class="btn-secondary add-item-btn" id="btnAddGallery">+ Додати фото</button>';
@@ -457,10 +478,21 @@
         if (prev) { prev.src = imgPreviewSrc(this.value); prev.style.display = this.value ? 'block' : 'none'; }
       });
     }
+    document.querySelectorAll('#editorFields input[id$="_image"]').forEach(function (input) {
+      if (input.id === 'f_image') return;
+      var prevId = input.id + '_preview';
+      var prev = document.getElementById(prevId);
+      if (!prev) return;
+      input.addEventListener('input', function () {
+        prev.src = imgPreviewSrc(this.value);
+        prev.style.display = this.value ? 'block' : 'none';
+      });
+    });
   }
   function escapeAttr(s) { return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
   function escapeHtml(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
+  // Збір значень полів форми в об'єкт data для вказаного розділу (fromSection). При перемиканні передаємо попередній розділ.
   function collectFields(fromSection) {
     var section = fromSection !== undefined ? fromSection : document.getElementById('section').value;
     var s = data[section] || {};
@@ -521,11 +553,13 @@
     data[section] = s;
   }
 
+  // Синхронізація вкладки JSON: записує поточний data у textarea (при переключенні на вкладку «JSON»)
   function syncRawJson() {
     var ta = document.getElementById('rawJson');
     if (ta) ta.value = JSON.stringify(data, null, 2);
   }
 
+  // Застосування змін з вкладки JSON: парсимо textarea, записуємо в data, перемальовуємо форму
   function applyRawJson() {
     var ta = document.getElementById('rawJson');
     if (!ta) return;
@@ -562,12 +596,14 @@
     applyRawJson();
   }
 
+  // Зміна розділу: спочатку збираємо дані з поточного розділу (currentSection), потім перемальовуємо форму нового
   document.getElementById('section').addEventListener('change', function () {
     collectFields(currentSection);
     currentSection = document.getElementById('section').value;
     renderFields();
   });
 
+  // Завантаження контенту з репо — читає content/site-content.json через GitHub API, декодує UTF-8, мержить з defaultContent
   function loadFromGitHub() {
     var token = getToken();
     if (!token) { showStatus('editorStatus', 'Спочатку увійдіть (GitHub Token).', 'error'); return; }
@@ -609,6 +645,7 @@
       });
   }
 
+  // Збереження змін контенту в GitHub: збираємо поточний розділ (або весь JSON з вкладки JSON), кодуємо UTF-8, PUT у репо
   function saveToGitHub() {
     var token = getToken();
     if (!token) { showStatus('editorStatus', 'Спочатку увійдіть.', 'error'); return; }
@@ -678,6 +715,7 @@
   }
   document.getElementById('btnDeployStatus').addEventListener('click', refreshDeployStatus);
 
+  // Додаємо URL завантаженого фото в список «Останні завантаження», оновлюємо DOM з превʼю та кнопками «Використати для Hero/Про нас»
   function addRecentUrl(url) {
     recentUploadedUrls.unshift(url);
     if (recentUploadedUrls.length > 10) recentUploadedUrls.pop();
@@ -685,8 +723,10 @@
     var block = document.getElementById('recentUploads');
     if (!list || !block) return;
     block.style.display = 'block';
+    var base = DEFAULT.siteUrl.replace(/\/$/, '');
     list.innerHTML = recentUploadedUrls.map(function (u) {
-      return '<div class="upload-item"><input type="text" value="' + escapeAttr(u) + '" readonly /><button type="button" class="btn-small btn-secondary copy-url" data-url="' + escapeAttr(u) + '">Копіювати</button><div class="insert-btns"><button type="button" class="btn-small btn-primary insert-hero" data-url="' + escapeAttr(u) + '">Вставити в Hero</button><button type="button" class="btn-small btn-primary insert-about" data-url="' + escapeAttr(u) + '">Вставити в Про нас</button></div></div>';
+      var src = u.indexOf('http') === 0 ? u : base + (u.indexOf('/') === 0 ? u : '/' + u);
+      return '<div class="upload-item"><img class="upload-thumb" src="' + escapeAttr(src) + '" alt="" onerror="this.style.display=\'none\'" /><input type="text" value="' + escapeAttr(u) + '" readonly /><button type="button" class="btn-small btn-secondary copy-url" data-url="' + escapeAttr(u) + '">Копіювати</button><div class="insert-btns"><button type="button" class="btn-small btn-primary insert-hero" data-url="' + escapeAttr(u) + '">Використати для Hero</button><button type="button" class="btn-small btn-primary insert-about" data-url="' + escapeAttr(u) + '">Використати для Про нас</button></div></div>';
     }).join('');
     list.querySelectorAll('.copy-url').forEach(function (btn) {
       btn.addEventListener('click', function () {
@@ -702,7 +742,7 @@
         currentSection = 'hero';
         document.getElementById('section').value = 'hero';
         renderFields();
-        showStatus('editorStatus', 'URL вставлено в Hero.', 'success');
+        showStatus('editorStatus', 'Фото підставлено в Hero. Натисніть «Зберегти в GitHub», щоб опублікувати.', 'success');
       });
     });
     list.querySelectorAll('.insert-about').forEach(function (btn) {
@@ -713,11 +753,38 @@
         currentSection = 'about';
         document.getElementById('section').value = 'about';
         renderFields();
-        showStatus('editorStatus', 'URL вставлено в Про нас.', 'success');
+        showStatus('editorStatus', 'Фото підставлено в блок «Про нас». Натисніть «Зберегти в GitHub».', 'success');
       });
     });
   }
 
+  // Підстановка URL фото (з поля «Вставте посилання») у Hero або Про нас без завантаження файлу
+  function useImageUrlForSection(url, sectionKey) {
+    var u = (typeof url === 'string' ? url : '').trim();
+    if (!u) { showStatus('editorStatus', 'Введіть посилання на фото.', 'error'); return; }
+    collectFields(currentSection);
+    if (sectionKey === 'hero') {
+      data.hero = data.hero || {};
+      data.hero.image = u;
+      currentSection = 'hero';
+      document.getElementById('section').value = 'hero';
+    } else if (sectionKey === 'about') {
+      data.about = data.about || {};
+      data.about.image = u;
+      currentSection = 'about';
+      document.getElementById('section').value = 'about';
+    }
+    renderFields();
+    showStatus('editorStatus', 'Посилання підставлено. Натисніть «Зберегти в GitHub».', 'success');
+  }
+  document.getElementById('btnUseUrlHero').addEventListener('click', function () {
+    useImageUrlForSection(document.getElementById('pasteImageUrl').value, 'hero');
+  });
+  document.getElementById('btnUseUrlAbout').addEventListener('click', function () {
+    useImageUrlForSection(document.getElementById('pasteImageUrl').value, 'about');
+  });
+
+  // Завантаження одного файлу в репо (images/uploads/): base64 → GitHub API PUT. У колбек повертаємо URL для вставки.
   function uploadImage(file, done) {
     var token = getToken();
     if (!token) { showStatus('uploadStatus', 'Увійдіть у систему (GitHub Token).', 'error'); return; }
@@ -743,6 +810,7 @@
     reader.readAsDataURL(file);
   }
 
+  // Обробка кількох файлів: фільтруємо тільки image/*, завантажуємо по черзі, після всіх показуємо статус
   function uploadMultiple(files) {
     var token = getToken();
     if (!token) { showStatus('uploadStatus', 'Увійдіть у систему.', 'error'); return; }
@@ -754,7 +822,7 @@
       uploadImage(file, function (url, err) {
         done++;
         if (err) showStatus('uploadStatus', 'Помилка для ' + file.name + ': ' + err.message, 'error');
-        if (done === list.length) showStatus('uploadStatus', 'Завантажено ' + list.length + ' файлів. Використайте кнопки «Вставити в Hero» / «Вставити в Про нас».', 'success');
+        if (done === list.length) showStatus('uploadStatus', 'Завантажено ' + list.length + ' файлів. Нижче натисніть «Використати для Hero» або «Використати для Про нас», потім «Зберегти в GitHub».', 'success');
       });
     });
   }
