@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>Перегляд збереженого контенту — Гроно любові</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: #faf8f5; color: #2c2c2c; line-height: 1.5; }
+    .preview-notice { background: #fff3e0; color: #e65100; padding: 12px 16px; text-align: center; font-size: 0.9rem; }
+    .preview-notice a { color: #8B1538; font-weight: 600; }
+    #root { max-width: 42rem; margin: 0 auto; padding: 24px 16px 48px; }
+    #root h1 { font-size: 1.5rem; margin: 0 0 24px; }
+    #root h2 { font-size: 1.1rem; margin: 0 0 8px; }
+    #root section { margin-bottom: 32px; }
+    #root p { margin: 0 0 8px; color: #555; font-size: 0.95rem; }
+    #root code { background: #eee; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; }
+    #root img { max-width: 100%; height: auto; border-radius: 8px; border: 1px solid #e0d9d2; display: block; }
+    #root .img-error { color: #c62828; font-size: 0.9rem; }
+    #root .muted { color: #777; font-size: 0.9rem; }
+    #root a { color: #8B1538; }
+  </style>
+</head>
+<body>
+  <div class="preview-notice">Це лише перегляд контенту з <code>content/site-content.json</code>. <a href="/">Головна сторінка</a> показує повний додаток і не використовує цей файл.</div>
+  <div id="root"></div>
+  <script>
+    (function() {
+      var root = document.getElementById('root');
+      function esc(t) { var d = document.createElement('div'); d.textContent = t == null ? '' : t; return d.innerHTML; }
+      function imgUrl(url) {
+        if (!url) return '';
+        if (url.indexOf('http') === 0) return url;
+        return url.indexOf('/') === 0 ? url : '/' + url;
+      }
+      function sectionImg(label, url) {
+        if (!url) return '<p class="muted">URL не задано</p>';
+        var src = esc(imgUrl(url));
+        return '<p class="muted" style="margin-bottom:8px">URL: <code>' + esc(url) + '</code></p>' +
+          '<img src="' + src + '" alt="' + esc(label) + '" onerror="this.outerHTML=\'<p class="img-error">Помилка завантаження зображення. Перевірте URL.</p>\'" />';
+      }
+      fetch('content/site-content.json').then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }).then(function(data) {
+        if (!data) {
+          root.innerHTML = '<p style="padding:24px">Контент не знайдено або помилка завантаження.</p>';
+          return;
+        }
+        var hero = data.hero || {}, about = data.about || {};
+        root.innerHTML =
+          '<h1>Перегляд збереженого контенту</h1>' +
+          '<section><h2>Hero — зображення</h2>' + sectionImg('Hero', hero.image) + '</section>' +
+          '<section><h2>Hero — заголовок</h2><p>' + esc(hero.title || '—') + '</p><p class="muted">' + esc(hero.subtitle || '') + '</p></section>' +
+          '<section><h2>Про нас — зображення</h2>' + sectionImg('Про нас', about.image) + '</section>' +
+          '<section><h2>Про нас — заголовок і текст</h2><p><strong>' + esc(about.title || '—') + '</strong></p><p>' + esc(about.body || '') + '</p></section>' +
+          '<p style="margin-top:24px" class="muted"><a href="/admin/">Повернутися в адмінку</a></p>';
+      });
+    })();
+  </script>
+</body>
+</html>
