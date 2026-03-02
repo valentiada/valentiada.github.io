@@ -8,11 +8,28 @@
   <style>
     * { box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; background: #f5f0eb; color: #2c2c2c; line-height: 1.5; }
+    /* Екран входу */
+    #loginScreen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; background: linear-gradient(160deg, #faf8f6 0%, #efe9e3 100%); }
+    #loginScreen.hidden { display: none; }
+    .login-card { background: #fff; border-radius: 16px; padding: 40px; max-width: 420px; width: 100%; box-shadow: 0 8px 32px rgba(0,0,0,0.08); border: 1px solid #e8e2dc; }
+    .login-card h1 { margin: 0 0 8px; font-size: 1.5rem; color: #8B1538; }
+    .login-card p { margin: 0 0 24px; color: #666; font-size: 0.95rem; }
+    .login-card label { display: block; margin-bottom: 6px; font-size: 0.9rem; font-weight: 500; }
+    .login-card input { width: 100%; padding: 12px 14px; border: 1px solid #d0c8c0; border-radius: 8px; font-size: 15px; margin-bottom: 20px; }
+    .login-card input:focus { outline: none; border-color: #8B1538; box-shadow: 0 0 0 2px rgba(139,21,56,0.15); }
+    .login-card button { width: 100%; padding: 14px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; background: #8B1538; color: #fff; }
+    .login-card button:hover { background: #70122e; }
+    .login-card .help { margin-top: 16px; font-size: 0.85rem; color: #888; }
+    .login-card .help a { color: #8B1538; }
+    #loginError { margin-top: 12px; padding: 10px; border-radius: 8px; background: #ffebee; color: #c62828; font-size: 0.9rem; display: none; }
+    /* Основна адмінка */
+    #adminPanel { display: none; min-height: 100vh; }
+    #adminPanel.visible { display: block; }
     .layout { display: flex; min-height: 100vh; }
     .sidebar { width: 340px; min-width: 300px; padding: 24px; background: #fff; border-right: 1px solid #e0d9d2; overflow-y: auto; }
     .main { flex: 1; padding: 24px; overflow-y: auto; }
-    h1 { font-size: 1.25rem; margin: 0 0 20px; color: #8B1538; }
-    h2 { font-size: 1rem; margin: 20px 0 10px; font-weight: 600; }
+    .sidebar h1 { font-size: 1.25rem; margin: 0 0 20px; color: #8B1538; }
+    .sidebar h2 { font-size: 1rem; margin: 20px 0 10px; font-weight: 600; }
     .step { margin-bottom: 16px; padding: 12px; background: #faf8f6; border-radius: 8px; border-left: 3px solid #8B1538; }
     .step strong { display: block; margin-bottom: 4px; }
     .step span { font-size: 0.9rem; color: #555; }
@@ -24,6 +41,8 @@
     .btn-primary:hover { background: #70122e; }
     .btn-secondary { background: #e8e2dc; color: #333; margin-left: 8px; }
     .btn-secondary:hover { background: #ddd6ce; }
+    .btn-small { padding: 6px 10px; font-size: 12px; }
+    .btn-link { background: none; color: #8B1538; text-decoration: underline; margin-left: 0; }
     .info-box { font-size: 0.85rem; color: #555; background: #faf8f6; padding: 12px; border-radius: 8px; margin: 12px 0; }
     .info-box strong { color: #333; }
     .repo-row { font-size: 0.8rem; margin: 4px 0; word-break: break-all; }
@@ -32,9 +51,13 @@
     .section-select { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 20px; }
     select { padding: 8px 12px; border: 1px solid #d0c8c0; border-radius: 6px; font-size: 14px; min-width: 160px; }
     .field { margin-bottom: 16px; }
-    .drop-zone { border: 2px dashed #c0b8b0; border-radius: 8px; padding: 32px; text-align: center; background: #faf8f6; margin: 12px 0; cursor: pointer; transition: background .2s; }
+    .field-with-preview { display: flex; gap: 12px; align-items: flex-start; }
+    .field-with-preview input { flex: 1; }
+    .img-preview { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #e0d9d2; background: #f5f0eb; }
+    .drop-zone { border: 2px dashed #c0b8b0; border-radius: 8px; padding: 28px; text-align: center; background: #faf8f6; margin: 12px 0; cursor: pointer; transition: background .2s; }
     .drop-zone:hover, .drop-zone.dragover { background: #f0ebe6; border-color: #8B1538; }
     .drop-zone input { display: none; }
+    .drop-zone .hint { font-size: 0.85rem; color: #888; margin-top: 8px; }
     .url-output { margin-top: 12px; }
     .url-output input { font-size: 0.85rem; }
     .status { margin-top: 12px; padding: 8px 12px; border-radius: 6px; font-size: 0.9rem; }
@@ -43,92 +66,146 @@
     .status.info { background: #e3f2fd; color: #1565c0; }
     .mb-0 { margin-bottom: 0; }
     .mt-16 { margin-top: 16px; }
+    .logout-row { margin-top: 24px; padding-top: 16px; border-top: 1px solid #e8e2dc; }
+    .deploy-status { margin-top: 16px; padding: 12px; background: #f5f8fa; border-radius: 8px; font-size: 0.85rem; }
+    .deploy-status h3 { margin: 0 0 8px; font-size: 0.9rem; }
+    .deploy-status .line { margin: 4px 0; }
+    .deploy-status .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
+    .deploy-status .badge.built { background: #e8f5e9; color: #2e7d32; }
+    .deploy-status .badge.building { background: #fff3e0; color: #e65100; }
+    .deploy-status .badge.unknown { background: #eceff1; color: #546e7a; }
+    .recent-uploads { margin-top: 16px; }
+    .recent-uploads h3 { font-size: 0.9rem; margin: 0 0 8px; }
+    .upload-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 0.85rem; }
+    .upload-item input { flex: 1; margin: 0; font-size: 12px; }
+    .insert-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+    .tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid #e0d9d2; }
+    .tabs button { border-radius: 8px 8px 0 0; margin: 0; background: transparent; color: #666; }
+    .tabs button.active { background: #faf8f6; color: #8B1538; font-weight: 600; }
+    .raw-json { font-family: monospace; font-size: 12px; min-height: 200px; }
     @media (max-width: 900px) { .layout { flex-direction: column; } .sidebar { width: 100%; border-right: none; border-bottom: 1px solid #e0d9d2; } }
   </style>
 </head>
 <body>
-  <div class="layout">
-    <aside class="sidebar">
-      <h1>Адмінка — Гроно любові</h1>
+  <!-- Екран входу -->
+  <div id="loginScreen">
+    <div class="login-card">
+      <h1>Війти в систему</h1>
+      <p>Адмінка сайту «Гроно любові». Введіть GitHub Token з правами <em>Contents: Read and write</em>.</p>
+      <label for="loginToken">GitHub Token</label>
+      <input type="password" id="loginToken" placeholder="ghp_..." autocomplete="off" />
+      <button type="button" id="btnLogin">Війти</button>
+      <div id="loginError"></div>
+      <p class="help">Токен створюється в GitHub → Settings → Developer settings → Personal access tokens. Не діліться ним з іншими.</p>
+    </div>
+  </div>
 
-      <h2>Крок 1: Завантажити контент</h2>
-      <div class="step">
-        <strong>Вставте GitHub Token і натисніть «Завантажити з GitHub».</strong>
-        <span>Токен потрібен з правами Contents: Read and write.</span>
-      </div>
-      <label>GitHub Token</label>
-      <input type="password" id="token" placeholder="ghp_..." autocomplete="off" />
-      <button type="button" class="btn-primary" id="btnLoad">Завантажити з GitHub</button>
+  <!-- Основна панель (після входу) -->
+  <div id="adminPanel">
+    <div class="layout">
+      <aside class="sidebar">
+        <h1>Адмінка — Гроно любові</h1>
 
-      <h2>Крок 2: Редагувати</h2>
-      <div class="step">
-        <strong>Оберіть розділ у випадаючому списку і змініть поля справа.</strong>
-      </div>
+        <h2>Крок 1: Завантажити контент</h2>
+        <div class="step">
+          <strong>Натисніть «Завантажити з GitHub».</strong>
+          <span>Контент підхопиться з репозиторію.</span>
+        </div>
+        <button type="button" class="btn-primary" id="btnLoad">Завантажити з GitHub</button>
 
-      <h2>Крок 3: Зберегти</h2>
-      <div class="step">
-        <strong>Натисніть «Зберегти в GitHub».</strong>
-        <span>Сайт оновиться після деплою на GitHub Pages.</span>
-      </div>
-      <button type="button" class="btn-primary mt-16" id="btnSave">Зберегти в GitHub</button>
-
-      <h2>Що важливо</h2>
-      <div class="info-box">
-        <strong>GitHub Token</strong> обовʼязковий: створіть у GitHub → Settings → Developer settings → Personal access tokens з доступом <em>Contents: Read and write</em>.
-        <br><br>
-        Далі: «Завантажити з GitHub» → редагуйте справа (Сайт, Hero, Про нас, Футер) → «Зберегти в GitHub».
-        <br><br>
-        Фото: можна вказати URL у полях зображень або завантажити файл нижче — він збережеться в <code>images/uploads</code>.
-      </div>
-
-      <h2>Репозиторій</h2>
-      <div class="info-box repo-row">
-        <strong>Репозиторій:</strong> <span id="repoDisplay">valentiada / valentiada.github.io</span><br>
-        <strong>Ветка:</strong> <span id="branchDisplay">main</span><br>
-        <strong>Файл контенту:</strong> <span id="pathDisplay">content/site-content.json</span><br>
-        <strong>Папка для фото:</strong> <span id="photoFolderDisplay">images/uploads</span><br>
-        <strong>Сайт:</strong> <a href="https://gronoliubovi.fun/" target="_blank" rel="noopener">https://gronoliubovi.fun/</a><br>
-        <strong>Адмінка:</strong> <a href="https://gronoliubovi.fun/admin/" target="_blank" rel="noopener">https://gronoliubovi.fun/admin/</a>
-      </div>
-
-      <label><input type="checkbox" id="autoLoad" checked /> Автозавантаження при відкритті (якщо є токен)</label>
-    </aside>
-
-    <main class="main">
-      <div class="editor-card">
-        <h2>Візуальний редактор</h2>
-        <p class="mb-0" style="color:#666;font-size:0.9rem;">Оберіть розділ і змініть поля. Зміни збережуться лише після натискання «Зберегти в GitHub».</p>
-
-        <div class="section-select">
-          <label class="field" style="margin-bottom:0;">Розділ</label>
-          <select id="section">
-            <option value="site">Сайт (meta)</option>
-            <option value="hero">Hero</option>
-            <option value="about">Про нас</option>
-            <option value="footer">Футер</option>
-          </select>
+        <h2>Крок 2: Редагувати</h2>
+        <div class="step">
+          <strong>Оберіть розділ і змініть поля справа.</strong>
+          <span>Можна редагувати всі дрібниці: тексти, посилання, зображення.</span>
         </div>
 
-        <div id="editorFields"></div>
-        <div id="editorStatus" class="status" style="display:none;"></div>
-      </div>
+        <h2>Крок 3: Зберегти</h2>
+        <div class="step">
+          <strong>Натисніть «Зберегти в GitHub».</strong>
+          <span>Сайт оновиться після деплою на GitHub Pages.</span>
+        </div>
+        <button type="button" class="btn-primary mt-16" id="btnSave">Зберегти в GitHub</button>
 
-      <div class="editor-card">
-        <h2>Завантаження фото в GitHub</h2>
-        <p style="color:#666;font-size:0.9rem;">Перетягніть зображення сюди або оберіть файл. Після завантаження URL можна вставити в поле зображення поточного розділу.</p>
-        <div class="drop-zone" id="dropZone">
-          <input type="file" id="fileInput" accept="image/*" />
-          <p style="margin:0;">Перетягніть фото сюди або натисніть, щоб обрати файл</p>
-          <button type="button" class="btn-secondary" style="margin-top:12px;">Обрати файл</button>
+        <h2>Корисне</h2>
+        <div class="info-box">
+          Фото: завантажуйте в блок «Медіа» — одразу кілька файлів (drag-and-drop або вибір). Потім кнопкою «Вставити в Hero» / «Вставити в Про нас» підставити URL.
+          <br><br>
+          У полях зображень можна вставляти будь-який URL або шлях, наприклад <code>/images/файл.jpg</code>.
         </div>
-        <div class="url-output">
-          <label>URL для вставки (працює після деплою)</label>
-          <input type="text" id="uploadedUrl" readonly placeholder="URL зʼявиться після завантаження" />
-          <button type="button" class="btn-secondary" id="btnInsertUrl">Вставити в поле зображення</button>
+
+        <div class="info-box repo-row">
+          <strong>Репозиторій:</strong> <span id="repoDisplay">valentiada / valentiada.github.io</span><br>
+          <strong>Ветка:</strong> <span id="branchDisplay">main</span><br>
+          <strong>Файл контенту:</strong> <span id="pathDisplay">content/site-content.json</span><br>
+          <strong>Папка для фото:</strong> <span id="photoFolderDisplay">images/uploads</span><br>
+          <strong>Сайт:</strong> <a href="https://gronoliubovi.fun/" target="_blank" rel="noopener">gronoliubovi.fun</a><br>
+          <strong>Адмінка:</strong> <a href="https://gronoliubovi.fun/admin/" target="_blank" rel="noopener">gronoliubovi.fun/admin</a>
         </div>
-        <div id="uploadStatus" class="status" style="display:none;"></div>
-      </div>
-    </main>
+
+        <label><input type="checkbox" id="autoLoad" checked /> Автозавантаження контенту при відкритті</label>
+
+        <h2>Статус деплою</h2>
+        <div class="deploy-status" id="deployStatus">
+          <h3>GitHub Pages</h3>
+          <div class="line" id="deployLastCommit">—</div>
+          <div class="line" id="deployPagesStatus">—</div>
+          <button type="button" class="btn-secondary btn-small mt-16" id="btnDeployStatus">Перевірити статус</button>
+        </div>
+
+        <div class="logout-row">
+          <button type="button" class="btn-secondary btn-link" id="btnLogout">Вийти з системи</button>
+        </div>
+      </aside>
+
+      <main class="main">
+        <div class="tabs">
+          <button type="button" class="tabs-btn active" data-tab="visual">Редактор</button>
+          <button type="button" class="tabs-btn" data-tab="raw">JSON</button>
+        </div>
+
+        <div id="tabVisual" class="tab-content">
+          <div class="editor-card">
+            <h2>Контент</h2>
+            <div class="section-select">
+              <label style="margin-bottom:0;">Розділ</label>
+              <select id="section">
+                <option value="site">Сайт (meta, OG)</option>
+                <option value="hero">Hero</option>
+                <option value="about">Про нас</option>
+                <option value="footer">Футер</option>
+              </select>
+            </div>
+            <div id="editorFields"></div>
+            <div id="editorStatus" class="status" style="display:none;"></div>
+          </div>
+
+          <div class="editor-card">
+            <h2>Медіа: завантаження фото</h2>
+            <p style="color:#666;font-size:0.9rem;margin-bottom:12px;">Перетягніть кілька фото сюди або натисніть і оберіть файли. Після завантаження натисніть «Вставити в Hero» або «Вставити в Про нас».</p>
+            <div class="drop-zone" id="dropZone">
+              <input type="file" id="fileInput" accept="image/*" multiple />
+              <p style="margin:0;">Перетягніть фото сюди або натисніть, щоб обрати файли</p>
+              <span class="hint">Підтримуються JPG, PNG, WebP, GIF. Можна вибрати кілька файлів.</span>
+            </div>
+            <div class="recent-uploads" id="recentUploads" style="display:none;">
+              <h3>Останні завантаження</h3>
+              <div id="recentUploadsList"></div>
+            </div>
+            <div id="uploadStatus" class="status" style="display:none;"></div>
+          </div>
+        </div>
+
+        <div id="tabRaw" class="tab-content" style="display:none;">
+          <div class="editor-card">
+            <h2>Сирі дані (JSON)</h2>
+            <p style="color:#666;font-size:0.9rem;margin-bottom:12px;">Для складних правок. Змініть JSON, натисніть «Застосувати», потім «Зберегти в GitHub» у бічній панелі.</p>
+            <textarea id="rawJson" class="raw-json"></textarea>
+            <button type="button" class="btn-secondary mt-16" id="btnApplyRaw">Застосувати JSON</button>
+            <div id="rawJsonStatus" class="status" style="display:none;"></div>
+          </div>
+        </div>
+      </main>
+    </div>
   </div>
 
   <script>
@@ -143,49 +220,146 @@
   };
 
   var defaultContent = {
-    site: { title: 'Гроно любові | Крафтова мануфактура — Поділля', description: 'Гроно любові — крафтова мануфактура на Поділлі: виноградний сік, мед, лаванда, трав\'яні мікси, чаї, саджанці. Дегустації та фотосесії.', ogTitle: 'Гроно любові | Крафтова мануфактура — Поділля' },
-    hero: { title: 'Гроно любові', subtitle: 'Крафтова мануфактура на Поділлі: виноградний сік, мед, лаванда, трав\'яні мікси, чаї, саджанці. Дегустації та фотосесії.', image: '/images/grapes-vine-closeup.png', ctaText: 'Перейти до контенту' },
-    about: { title: 'Про нас', body: 'Ми — крафтова мануфактура на Поділлі. Вирощуємо виноград, лаванду, збираємо мед, готуємо трав\'яні мікси та чаї. Запрошуємо на дегустації та фотосесії.', image: '/images/beekeeper-honeycomb-sky.png' },
-    footer: { telegramUrl: 'https://t.me/gronoliubovi', footerText: 'Гроно любові — Поділля. Зв\'яжіться з нами через Telegram.', contactLine: 'Поділля, Україна' }
+    site: {
+      title: 'Гроно любові | Крафтова мануфактура — Поділля',
+      description: 'Гроно любові — крафтова мануфактура на Поділлі: виноградний сік, мед, лаванда, трав\'яні мікси, чаї, саджанці. Дегустації та фотосесії.',
+      ogTitle: 'Гроно любові | Крафтова мануфактура — Поділля',
+      ogDescription: 'Виноградний сік, мед, лаванда, трав\'яні мікси, чаї, саджанці. Дегустації та фотосесії на Поділлі.'
+    },
+    hero: {
+      title: 'Гроно любові',
+      subtitle: 'Крафтова мануфактура на Поділлі: виноградний сік, мед, лаванда, трав\'яні мікси, чаї, саджанці. Дегустації та фотосесії.',
+      image: '/images/grapes-vine-closeup.png',
+      ctaText: 'Перейти до контенту'
+    },
+    about: {
+      title: 'Про нас',
+      body: 'Ми — крафтова мануфактура на Поділлі. Вирощуємо виноград, лаванду, збираємо мед, готуємо трав\'яні мікси та чаї. Запрошуємо на дегустації та фотосесії.',
+      image: '/images/beekeeper-honeycomb-sky.png'
+    },
+    footer: {
+      telegramUrl: 'https://t.me/gronoliubovi',
+      footerText: 'Гроно любові — Поділля. Зв\'яжіться з нами через Telegram.',
+      contactLine: 'Поділля, Україна'
+    }
   };
 
   var config = { owner: DEFAULT.owner, repo: DEFAULT.repo, branch: DEFAULT.branch, contentPath: DEFAULT.contentPath, photoFolder: DEFAULT.photoFolder };
   var data = JSON.parse(JSON.stringify(defaultContent));
   var contentSha = null;
+  var recentUploadedUrls = [];
 
-  function getToken() { return document.getElementById('token').value.trim(); }
+  function getToken() {
+    try { return sessionStorage.getItem('gronoliubovi_admin_token') || ''; } catch (e) { return ''; }
+  }
   function apiUrl(path) { return 'https://api.github.com/repos/' + config.owner + '/' + config.repo + '/contents/' + path + '?ref=' + encodeURIComponent(config.branch); }
+
+  function b64DecodeUtf8(b64) {
+    try {
+      var bin = atob(b64.replace(/\n/g, ''));
+      var bytes = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return new TextDecoder('utf-8').decode(bytes);
+    } catch (e) { return ''; }
+  }
+  function b64EncodeUtf8(str) {
+    var bytes = new TextEncoder().encode(str);
+    var bin = '';
+    for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin);
+  }
 
   function showStatus(elId, text, type) {
     var el = document.getElementById(elId);
+    if (!el) return;
     el.style.display = 'block';
     el.className = 'status ' + (type || 'info');
     el.textContent = text;
+  }
+
+  function showLoginError(msg) {
+    var el = document.getElementById('loginError');
+    el.style.display = msg ? 'block' : 'none';
+    el.textContent = msg || '';
+    el.className = '';
+  }
+
+  function enterAdmin(token) {
+    try { sessionStorage.setItem('gronoliubovi_admin_token', token); } catch (e) {}
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('adminPanel').classList.add('visible');
+    initPanel();
+  }
+
+  function logout() {
+    try { sessionStorage.removeItem('gronoliubovi_admin_token'); } catch (e) {}
+    document.getElementById('loginScreen').classList.remove('hidden');
+    document.getElementById('adminPanel').classList.remove('visible');
+    document.getElementById('loginToken').value = '';
+    showLoginError('');
+  }
+
+  document.getElementById('btnLogin').addEventListener('click', function () {
+    var token = document.getElementById('loginToken').value.trim();
+    if (!token) { showLoginError('Введіть GitHub Token.'); return; }
+    showLoginError('');
+    fetch('https://api.github.com/repos/' + config.owner + '/' + config.repo + '/contents/' + config.contentPath + '?ref=' + config.branch, {
+      headers: { 'Authorization': 'token ' + token, 'Accept': 'application/vnd.github.v3+json' }
+    }).then(function (r) {
+      if (r.status === 404) return Promise.resolve(null);
+      if (!r.ok) return r.json().then(function (j) { throw new Error(j.message || 'Помилка доступу'); });
+      return r.json();
+    }).then(function () {
+      enterAdmin(token);
+    }).catch(function (err) {
+      showLoginError(err.message || 'Невірний токен або немає доступу до репо.');
+    });
+  });
+
+  document.getElementById('loginToken').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') document.getElementById('btnLogin').click();
+  });
+
+  document.getElementById('btnLogout').addEventListener('click', logout);
+
+  function imgPreviewSrc(url) {
+    if (!url || url.length < 3) return '';
+    if (url.startsWith('http')) return url;
+    return DEFAULT.siteUrl.replace(/\/$/, '') + (url.startsWith('/') ? url : '/' + url);
   }
 
   function renderFields() {
     var section = document.getElementById('section').value;
     var html = '';
     var s = data[section] || {};
+    var siteUrl = DEFAULT.siteUrl.replace(/\/$/, '');
     if (section === 'site') {
       html += '<div class="field"><label>Заголовок сайту (title)</label><input type="text" id="f_title" value="' + escapeAttr(s.title) + '" /></div>';
       html += '<div class="field"><label>Опис (meta description)</label><textarea id="f_description">' + escapeHtml(s.description || '') + '</textarea></div>';
       html += '<div class="field"><label>OG заголовок</label><input type="text" id="f_ogTitle" value="' + escapeAttr(s.ogTitle) + '" /></div>';
+      html += '<div class="field"><label>OG опис</label><textarea id="f_ogDescription">' + escapeHtml(s.ogDescription || '') + '</textarea></div>';
     } else if (section === 'hero') {
       html += '<div class="field"><label>Заголовок</label><input type="text" id="f_title" value="' + escapeAttr(s.title) + '" /></div>';
       html += '<div class="field"><label>Підзаголовок</label><textarea id="f_subtitle">' + escapeHtml(s.subtitle || '') + '</textarea></div>';
-      html += '<div class="field"><label>URL зображення</label><input type="text" id="f_image" value="' + escapeAttr(s.image) + '" placeholder="/images/..." /></div>';
+      html += '<div class="field"><label>URL зображення</label><div class="field-with-preview"><input type="text" id="f_image" value="' + escapeAttr(s.image) + '" placeholder="/images/..." /><img class="img-preview" id="f_image_preview" src="' + escapeAttr(imgPreviewSrc(s.image)) + '" alt="" onerror="this.style.display=\'none\'" /></div></div>';
       html += '<div class="field"><label>Текст кнопки</label><input type="text" id="f_ctaText" value="' + escapeAttr(s.ctaText) + '" /></div>';
     } else if (section === 'about') {
       html += '<div class="field"><label>Заголовок</label><input type="text" id="f_title" value="' + escapeAttr(s.title) + '" /></div>';
       html += '<div class="field"><label>Текст</label><textarea id="f_body" style="min-height:120px">' + escapeHtml(s.body || '') + '</textarea></div>';
-      html += '<div class="field"><label>URL зображення</label><input type="text" id="f_image" value="' + escapeAttr(s.image) + '" placeholder="/images/..." /></div>';
+      html += '<div class="field"><label>URL зображення</label><div class="field-with-preview"><input type="text" id="f_image" value="' + escapeAttr(s.image) + '" placeholder="/images/..." /><img class="img-preview" id="f_image_preview" src="' + escapeAttr(imgPreviewSrc(s.image)) + '" alt="" onerror="this.style.display=\'none\'" /></div></div>';
     } else if (section === 'footer') {
       html += '<div class="field"><label>Посилання на Telegram</label><input type="text" id="f_telegramUrl" value="' + escapeAttr(s.telegramUrl) + '" /></div>';
       html += '<div class="field"><label>Текст у футері</label><textarea id="f_footerText">' + escapeHtml(s.footerText || '') + '</textarea></div>';
       html += '<div class="field"><label>Контактний рядок (адреса)</label><input type="text" id="f_contactLine" value="' + escapeAttr(s.contactLine) + '" /></div>';
     }
     document.getElementById('editorFields').innerHTML = html;
+    var imgInput = document.getElementById('f_image');
+    if (imgInput) {
+      imgInput.addEventListener('input', function () {
+        var prev = document.getElementById('f_image_preview');
+        if (prev) { prev.src = imgPreviewSrc(this.value); prev.style.display = this.value ? 'block' : 'none'; }
+      });
+    }
   }
   function escapeAttr(s) { return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
   function escapeHtml(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -194,24 +368,66 @@
     var section = document.getElementById('section').value;
     var s = data[section] || {};
     if (section === 'site') {
-      s.title = document.getElementById('f_title').value.trim();
-      s.description = document.getElementById('f_description').value.trim();
-      s.ogTitle = document.getElementById('f_ogTitle').value.trim();
+      s.title = (document.getElementById('f_title') || {}).value.trim();
+      s.description = (document.getElementById('f_description') || {}).value.trim();
+      s.ogTitle = (document.getElementById('f_ogTitle') || {}).value.trim();
+      s.ogDescription = (document.getElementById('f_ogDescription') || {}).value.trim();
     } else if (section === 'hero') {
-      s.title = document.getElementById('f_title').value.trim();
-      s.subtitle = document.getElementById('f_subtitle').value.trim();
-      s.image = document.getElementById('f_image').value.trim();
-      s.ctaText = document.getElementById('f_ctaText').value.trim();
+      s.title = (document.getElementById('f_title') || {}).value.trim();
+      s.subtitle = (document.getElementById('f_subtitle') || {}).value.trim();
+      s.image = (document.getElementById('f_image') || {}).value.trim();
+      s.ctaText = (document.getElementById('f_ctaText') || {}).value.trim();
     } else if (section === 'about') {
-      s.title = document.getElementById('f_title').value.trim();
-      s.body = document.getElementById('f_body').value.trim();
-      s.image = document.getElementById('f_image').value.trim();
+      s.title = (document.getElementById('f_title') || {}).value.trim();
+      s.body = (document.getElementById('f_body') || {}).value.trim();
+      s.image = (document.getElementById('f_image') || {}).value.trim();
     } else if (section === 'footer') {
-      s.telegramUrl = document.getElementById('f_telegramUrl').value.trim();
-      s.footerText = document.getElementById('f_footerText').value.trim();
-      s.contactLine = document.getElementById('f_contactLine').value.trim();
+      s.telegramUrl = (document.getElementById('f_telegramUrl') || {}).value.trim();
+      s.footerText = (document.getElementById('f_footerText') || {}).value.trim();
+      s.contactLine = (document.getElementById('f_contactLine') || {}).value.trim();
     }
     data[section] = s;
+  }
+
+  function syncRawJson() {
+    var ta = document.getElementById('rawJson');
+    if (ta) ta.value = JSON.stringify(data, null, 2);
+  }
+
+  function applyRawJson() {
+    var ta = document.getElementById('rawJson');
+    if (!ta) return;
+    try {
+      data = JSON.parse(ta.value);
+      renderFields();
+      showStatus('rawJsonStatus', 'JSON застосовано. Не забудьте «Зберегти в GitHub».', 'success');
+    } catch (e) {
+      showStatus('rawJsonStatus', 'Помилка JSON: ' + e.message, 'error');
+    }
+  }
+
+  document.querySelectorAll('.tabs-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var tab = this.getAttribute('data-tab');
+      document.querySelectorAll('.tabs-btn').forEach(function (b) { b.classList.remove('active'); });
+      document.querySelectorAll('.tab-content').forEach(function (c) { c.style.display = 'none'; });
+      this.classList.add('active');
+      if (tab === 'visual') {
+        document.getElementById('tabVisual').style.display = 'block';
+      } else {
+        document.getElementById('tabRaw').style.display = 'block';
+        collectFields();
+        syncRawJson();
+      }
+    });
+  });
+
+  document.getElementById('rawJson').addEventListener('input', function () {
+    var el = document.getElementById('rawJsonStatus');
+    el.style.display = 'none';
+  });
+  function btnApplyRaw() {
+    applyRawJson();
   }
 
   document.getElementById('section').addEventListener('change', function () {
@@ -221,7 +437,7 @@
 
   function loadFromGitHub() {
     var token = getToken();
-    if (!token) { showStatus('editorStatus', 'Вставте GitHub Token і натисніть «Завантажити з GitHub».', 'error'); return; }
+    if (!token) { showStatus('editorStatus', 'Спочатку увійдіть (GitHub Token).', 'error'); return; }
     showStatus('editorStatus', 'Завантаження…', 'info');
     fetch(apiUrl(config.contentPath), { headers: { 'Authorization': 'token ' + token, 'Accept': 'application/vnd.github.v3+json' } })
       .then(function (r) {
@@ -229,7 +445,8 @@
           data = JSON.parse(JSON.stringify(defaultContent));
           contentSha = null;
           renderFields();
-          showStatus('editorStatus', 'Файл ще не існує в репо. Редагуйте і натисніть «Зберегти в GitHub».', 'info');
+          syncRawJson();
+          showStatus('editorStatus', 'Файл ще не існує. Редагуйте і натисніть «Зберегти в GitHub».', 'info');
           return;
         }
         if (!r.ok) throw new Error(r.status + ' ' + r.statusText);
@@ -238,13 +455,16 @@
       .then(function (json) {
         if (!json) return;
         try {
-          var decoded = atob(json.content.replace(/\n/g, ''));
+          var decoded = b64DecodeUtf8(json.content);
           data = JSON.parse(decoded);
+          if (!data.site) data.site = defaultContent.site;
+          if (!data.site.ogDescription) data.site.ogDescription = data.site.description || '';
           contentSha = json.sha;
           renderFields();
+          syncRawJson();
           showStatus('editorStatus', 'Контент завантажено з GitHub.', 'success');
         } catch (e) {
-          showStatus('editorStatus', 'Помилка читання файлу: ' + e.message, 'error');
+          showStatus('editorStatus', 'Помилка читання: ' + e.message, 'error');
         }
       })
       .catch(function (err) {
@@ -254,10 +474,17 @@
 
   function saveToGitHub() {
     var token = getToken();
-    if (!token) { showStatus('editorStatus', 'Вставте GitHub Token.', 'error'); return; }
-    collectFields();
+    if (!token) { showStatus('editorStatus', 'Спочатку увійдіть.', 'error'); return; }
+    var rawTab = document.getElementById('tabRaw');
+    var rawTa = document.getElementById('rawJson');
+    if (rawTab && rawTab.style.display !== 'none' && rawTa) {
+      try { data = JSON.parse(rawTa.value); } catch (e) { showStatus('editorStatus', 'Помилка JSON: ' + e.message, 'error'); return; }
+    } else {
+      collectFields();
+    }
     showStatus('editorStatus', 'Збереження…', 'info');
-    var body = { message: 'Оновлення контенту з адмінки', content: btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2)))), branch: config.branch };
+    var jsonStr = JSON.stringify(data, null, 2);
+    var body = { message: 'Оновлення контенту з адмінки', content: b64EncodeUtf8(jsonStr), branch: config.branch };
     if (contentSha) body.sha = contentSha;
     fetch(apiUrl(config.contentPath), {
       method: 'PUT',
@@ -271,39 +498,93 @@
       .then(function (json) {
         contentSha = json.content.sha;
         showStatus('editorStatus', 'Збережено в GitHub. Сайт оновиться після деплою.', 'success');
+        refreshDeployStatus();
       })
       .catch(function (err) {
         showStatus('editorStatus', 'Помилка: ' + err.message, 'error');
       });
   }
 
-  document.getElementById('btnLoad').addEventListener('click', loadFromGitHub);
-  document.getElementById('btnSave').addEventListener('click', saveToGitHub);
-
-  var dropZone = document.getElementById('dropZone');
-  var fileInput = document.getElementById('fileInput');
-  dropZone.addEventListener('click', function () { fileInput.click(); });
-  dropZone.addEventListener('dragover', function (e) { e.preventDefault(); dropZone.classList.add('dragover'); });
-  dropZone.addEventListener('dragleave', function () { dropZone.classList.remove('dragover'); });
-  dropZone.addEventListener('drop', function (e) {
-    e.preventDefault();
-    dropZone.classList.remove('dragover');
-    var file = e.dataTransfer.files[0];
-    if (file && file.type.indexOf('image/') === 0) uploadImage(file);
-  });
-  fileInput.addEventListener('change', function () {
-    var file = fileInput.files[0];
-    if (file) uploadImage(file);
-    fileInput.value = '';
-  });
-
-  function uploadImage(file) {
+  function refreshDeployStatus() {
     var token = getToken();
-    if (!token) { showStatus('uploadStatus', 'Вставте GitHub Token.', 'error'); return; }
+    if (!token) return;
+    var commitEl = document.getElementById('deployLastCommit');
+    var pagesEl = document.getElementById('deployPagesStatus');
+    if (commitEl) commitEl.textContent = 'Завантаження…';
+    if (pagesEl) pagesEl.textContent = 'Завантаження…';
+    var base = 'https://api.github.com/repos/' + config.owner + '/' + config.repo;
+    var headers = { 'Authorization': 'token ' + token, 'Accept': 'application/vnd.github.v3+json' };
+    Promise.all([
+      fetch(base + '/commits?per_page=1', { headers: headers }).then(function (r) { return r.ok ? r.json() : []; }),
+      fetch(base + '/pages', { headers: headers }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
+    ]).then(function (results) {
+      var commits = results[0] || [];
+      var pages = results[1];
+      if (commitEl) {
+        if (commits.length) {
+          var c = commits[0];
+          var msg = (c.commit && c.commit.message) ? c.commit.message.split('\n')[0] : '';
+          var date = c.commit && c.commit.author && c.commit.author.date ? new Date(c.commit.author.date).toLocaleString('uk-UA') : '';
+          commitEl.innerHTML = 'Останній коміт: <strong>' + escapeHtml(msg) + '</strong><br><span style="color:#666">' + date + '</span>';
+        } else commitEl.textContent = 'Немає комітів';
+      }
+      if (pagesEl && pages) {
+        var status = (pages.status || '').toLowerCase();
+        var label = status === 'built' ? 'Опубліковано' : status === 'building' ? 'Збірка…' : '—';
+        var cls = status === 'built' ? 'built' : status === 'building' ? 'building' : 'unknown';
+        pagesEl.innerHTML = 'Сайт: <span class="badge ' + cls + '">' + label + '</span>';
+      } else if (pagesEl) pagesEl.textContent = 'Статус Pages: не доступний';
+    }).catch(function () {
+      if (commitEl) commitEl.textContent = 'Помилка завантаження';
+      if (pagesEl) pagesEl.textContent = 'Помилка завантаження';
+    });
+  }
+  document.getElementById('btnDeployStatus').addEventListener('click', refreshDeployStatus);
+
+  function addRecentUrl(url) {
+    recentUploadedUrls.unshift(url);
+    if (recentUploadedUrls.length > 10) recentUploadedUrls.pop();
+    var list = document.getElementById('recentUploadsList');
+    var block = document.getElementById('recentUploads');
+    if (!list || !block) return;
+    block.style.display = 'block';
+    list.innerHTML = recentUploadedUrls.map(function (u) {
+      return '<div class="upload-item"><input type="text" value="' + escapeAttr(u) + '" readonly /><button type="button" class="btn-small btn-secondary copy-url" data-url="' + escapeAttr(u) + '">Копіювати</button><div class="insert-btns"><button type="button" class="btn-small btn-primary insert-hero" data-url="' + escapeAttr(u) + '">Вставити в Hero</button><button type="button" class="btn-small btn-primary insert-about" data-url="' + escapeAttr(u) + '">Вставити в Про нас</button></div></div>';
+    }).join('');
+    list.querySelectorAll('.copy-url').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        navigator.clipboard.writeText(btn.getAttribute('data-url'));
+        showStatus('uploadStatus', 'URL скопійовано.', 'success');
+      });
+    });
+    list.querySelectorAll('.insert-hero').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        data.hero = data.hero || {};
+        data.hero.image = btn.getAttribute('data-url');
+        document.getElementById('section').value = 'hero';
+        collectFields();
+        renderFields();
+        showStatus('editorStatus', 'URL вставлено в Hero.', 'success');
+      });
+    });
+    list.querySelectorAll('.insert-about').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        data.about = data.about || {};
+        data.about.image = btn.getAttribute('data-url');
+        document.getElementById('section').value = 'about';
+        collectFields();
+        renderFields();
+        showStatus('editorStatus', 'URL вставлено в Про нас.', 'success');
+      });
+    });
+  }
+
+  function uploadImage(file, done) {
+    var token = getToken();
+    if (!token) { showStatus('uploadStatus', 'Увійдіть у систему (GitHub Token).', 'error'); return; }
     var ext = (file.name.match(/\.(\w+)$/) || [])[1] || 'jpg';
-    var name = 'img-' + Date.now() + '.' + ext.toLowerCase();
+    var name = 'img-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext.toLowerCase();
     var path = config.photoFolder + '/' + name;
-    showStatus('uploadStatus', 'Завантаження…', 'info');
     var reader = new FileReader();
     reader.onload = function () {
       var base64 = reader.result.split(',')[1];
@@ -314,40 +595,62 @@
       })
         .then(function (r) {
           if (!r.ok) return r.json().then(function (j) { throw new Error(j.message || r.statusText); });
-          var url = DEFAULT.siteUrl + path.replace(/^\/+/, '');
-          document.getElementById('uploadedUrl').value = '/' + path;
-          showStatus('uploadStatus', 'Файл завантажено. URL для вставки: /' + path, 'success');
+          var url = '/' + path;
+          addRecentUrl(url);
+          if (done) done(url);
         })
-        .catch(function (err) { showStatus('uploadStatus', 'Помилка: ' + err.message, 'error'); });
+        .catch(function (err) { if (done) done(null, err); });
     };
     reader.readAsDataURL(file);
   }
 
-  document.getElementById('btnInsertUrl').addEventListener('click', function () {
-    var url = document.getElementById('uploadedUrl').value.trim();
-    var imgField = document.getElementById('f_image');
-    if (imgField) { imgField.value = url; showStatus('editorStatus', 'URL вставлено в поле зображення.', 'success'); }
-  });
-
-  renderFields();
-  document.getElementById('repoDisplay').textContent = config.owner + ' / ' + config.repo;
-  document.getElementById('branchDisplay').textContent = config.branch;
-  document.getElementById('pathDisplay').textContent = config.contentPath;
-  document.getElementById('photoFolderDisplay').textContent = config.photoFolder;
-
-  if (document.getElementById('autoLoad').checked) {
-    try {
-      var saved = localStorage.getItem('gronoliubovi_admin_token');
-      if (saved) { document.getElementById('token').value = saved; loadFromGitHub(); }
-    } catch (e) {}
+  function uploadMultiple(files) {
+    var token = getToken();
+    if (!token) { showStatus('uploadStatus', 'Увійдіть у систему.', 'error'); return; }
+    var list = Array.from(files).filter(function (f) { return f.type.indexOf('image/') === 0; });
+    if (list.length === 0) { showStatus('uploadStatus', 'Оберіть зображення (JPG, PNG, WebP, GIF).', 'error'); return; }
+    showStatus('uploadStatus', 'Завантаження ' + list.length + ' файлів…', 'info');
+    var done = 0;
+    list.forEach(function (file, i) {
+      uploadImage(file, function (url, err) {
+        done++;
+        if (err) showStatus('uploadStatus', 'Помилка для ' + file.name + ': ' + err.message, 'error');
+        if (done === list.length) showStatus('uploadStatus', 'Завантажено ' + list.length + ' файлів. Використайте кнопки «Вставити в Hero» / «Вставити в Про нас».', 'success');
+      });
+    });
   }
-  document.getElementById('token').addEventListener('input', function () {
-    try {
-      var t = document.getElementById('token').value;
-      if (t) localStorage.setItem('gronoliubovi_admin_token', t);
-      else localStorage.removeItem('gronoliubovi_admin_token');
-    } catch (e) {}
-  });
+
+  var dropZone = document.getElementById('dropZone');
+  var fileInput = document.getElementById('fileInput');
+  if (dropZone) {
+    dropZone.addEventListener('click', function (e) { if (e.target.tagName !== 'INPUT') fileInput.click(); });
+    dropZone.addEventListener('dragover', function (e) { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', function () { dropZone.classList.remove('dragover'); });
+    dropZone.addEventListener('drop', function (e) {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      if (e.dataTransfer.files.length) uploadMultiple(e.dataTransfer.files);
+    });
+  }
+  if (fileInput) fileInput.addEventListener('change', function () { if (this.files.length) uploadMultiple(this.files); this.value = ''; });
+
+  document.getElementById('btnLoad').addEventListener('click', loadFromGitHub);
+  document.getElementById('btnSave').addEventListener('click', saveToGitHub);
+
+  document.getElementById('btnApplyRaw').addEventListener('click', btnApplyRaw);
+
+  function initPanel() {
+    renderFields();
+    syncRawJson();
+    document.getElementById('repoDisplay').textContent = config.owner + ' / ' + config.repo;
+    document.getElementById('branchDisplay').textContent = config.branch;
+    document.getElementById('pathDisplay').textContent = config.contentPath;
+    document.getElementById('photoFolderDisplay').textContent = config.photoFolder;
+    if (document.getElementById('autoLoad') && document.getElementById('autoLoad').checked) loadFromGitHub();
+    refreshDeployStatus();
+  }
+
+  // Завжди спочатку показувати екран авторизації; панель — лише після успішного входу по ключу
 })();
   </script>
 </body>
