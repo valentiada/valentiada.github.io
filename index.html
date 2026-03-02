@@ -13,55 +13,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=IBM+Plex+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/assets/index-BBapoSro.css">
+    <script type="module" crossorigin src="/assets/index-DIcVvFia.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BBapoSro.css">
   </head>
   <body>
     <div id="root"></div>
-    <script>
-      (function() {
-        var root = document.getElementById('root');
-        if (!root) return;
-        fetch('content/site-content.json').then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }).then(function(data) {
-          if (!data || !data.hero) {
-            var s = document.createElement('script');
-            s.type = 'module'; s.crossOrigin = 'anonymous'; s.src = '/assets/index-DIcVvFia.js';
-            document.head.appendChild(s);
-            return;
-          }
-          var hero = data.hero || {}, about = data.about || {}, footer = data.footer || {}, site = data.site || {};
-          var esc = function(t) { var d = document.createElement('div'); d.textContent = t; return d.innerHTML; };
-          var img = hero.image || '/images/grapes-vine-closeup.png';
-          if (site.title) document.title = site.title;
-          if (site.description) { var m = document.querySelector('meta[name="description"]'); if (m) m.setAttribute('content', site.description); }
-          root.className = 'min-h-screen bg-bg-paper text-text-primary font-sans selection:bg-grape-primary selection:text-white pt-16';
-          root.innerHTML = '<a href="#about" class="absolute -left-[9999px] focus:left-4 focus:top-20 focus:z-[100] px-4 py-2 bg-grape-primary text-white rounded-lg font-mono text-xs uppercase tracking-wider">Перейти до контенту</a>' +
-            '<header class="sticky top-0 z-50 border-b border-border-subtle bg-bg-paper/98 backdrop-blur-sm"><div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">' +
-            '<a href="#" class="font-serif text-xl text-text-primary">' + esc(hero.title || 'Гроно любові') + '</a>' +
-            '<nav class="flex gap-6"><a href="#about" class="text-sm text-text-secondary hover:text-grape-primary">Про нас</a>' +
-            '<a href="' + esc(footer.telegramUrl || 'https://t.me/gronoliubovi') + '" target="_blank" rel="noopener" class="text-sm text-text-secondary hover:text-grape-primary">Telegram</a>' +
-            '<a href="/admin/" class="text-sm text-text-muted hover:text-grape-primary">Адмінка</a></nav></div></header>' +
-            '<main><section class="border-b border-border-subtle" aria-label="Головний блок"><div class="grid grid-cols-1 lg:grid-cols-12 lg:min-h-[calc(100vh-4rem)]">' +
-            '<div class="lg:col-span-5 relative overflow-hidden bg-bg-warm border-b lg:border-b-0 lg:border-r border-border-subtle min-h-[50vh] lg:min-h-0">' +
-            '<img src="' + esc(img) + '" alt="" class="absolute inset-0 w-full h-full object-cover" loading="eager" />' +
-            '</div><div class="lg:col-span-7 flex flex-col justify-center px-6 py-12 lg:py-16">' +
-            '<h1 class="font-serif text-4xl md:text-5xl lg:text-6xl text-text-primary mb-4">' + esc(hero.title || 'Гроно любові') + '</h1>' +
-            '<p class="text-lg text-text-secondary max-w-xl mb-8">' + esc(hero.subtitle || '') + '</p>' +
-            '<a href="#about" class="inline-flex items-center gap-2 px-6 py-3 bg-grape-primary text-white rounded-lg font-mono text-sm uppercase tracking-wider hover:opacity-90">' + esc(hero.ctaText || 'Перейти до контенту') + '</a>' +
-            '</div></div></section>' +
-            '<section id="about" class="border-b border-border-subtle py-16 lg:py-24 scroll-mt-20"><div class="mx-auto max-w-6xl px-4">' +
-            '<div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">' +
-            '<div class="order-2 md:order-1"><h2 class="font-serif text-3xl lg:text-4xl text-text-primary mb-6">' + esc(about.title || 'Про нас') + '</h2>' +
-            '<div class="prose prose-lg text-text-secondary whitespace-pre-line">' + esc(about.body || '') + '</div></div>' +
-            '<div class="order-1 md:order-2 rounded-lg overflow-hidden">' +
-            '<img src="' + esc(about.image || '/images/beekeeper-honeycomb-sky.png') + '" alt="' + esc(about.title || '') + '" class="w-full h-auto object-cover" loading="lazy" />' +
-            '</div></div></div></section>' +
-            '<footer class="py-12 bg-bg-warm/50"><div class="mx-auto max-w-6xl px-4 text-center">' +
-            '<p class="text-text-secondary mb-4">' + esc(footer.footerText || '') + '</p>' +
-            (footer.contactLine ? '<p class="text-text-muted text-sm mb-6">' + esc(footer.contactLine) + '</p>' : '') +
-            '<a href="' + esc(footer.telegramUrl || '') + '" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-6 py-3 bg-grape-primary text-white rounded-lg font-mono text-sm uppercase tracking-wider hover:opacity-90">Написати в Telegram</a>' +
-            '</div></footer></main>';
-        });
-      })();
-    </script>
   </body>
 </html>
