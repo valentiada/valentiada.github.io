@@ -22,6 +22,8 @@
     .login-card .help { margin-top: 16px; font-size: 0.85rem; color: #888; }
     .login-card .help a { color: #8B1538; }
     #loginError { margin-top: 12px; padding: 10px; border-radius: 8px; background: #ffebee; color: #c62828; font-size: 0.9rem; display: none; }
+    .login-remember { margin: -8px 0 16px; font-size: 0.9rem; font-weight: normal; display: flex; align-items: center; gap: 8px; }
+    .login-remember input { width: auto; margin: 0; }
     /* Основна адмінка */
     #adminPanel { display: none; min-height: 100vh; }
     #adminPanel.visible { display: block; }
@@ -83,6 +85,9 @@
     .tabs button { border-radius: 8px 8px 0 0; margin: 0; background: transparent; color: #666; }
     .tabs button.active { background: #faf8f6; color: #8B1538; font-weight: 600; }
     .raw-json { font-family: monospace; font-size: 12px; min-height: 200px; }
+    .item-block { border: 1px solid #e0d9d2; border-radius: 8px; padding: 12px; margin-bottom: 12px; background: #faf8f6; position: relative; }
+    .item-block .remove-item { position: absolute; top: 8px; right: 8px; padding: 4px 8px; font-size: 12px; }
+    .add-item-btn { margin-top: 8px; }
     @media (max-width: 900px) { .layout { flex-direction: column; } .sidebar { width: 100%; border-right: none; border-bottom: 1px solid #e0d9d2; } }
   </style>
 </head>
@@ -94,6 +99,7 @@
       <p>Адмінка сайту «Гроно любові». Введіть GitHub Token з правами <em>Contents: Read and write</em>.</p>
       <label for="loginToken">GitHub Token</label>
       <input type="password" id="loginToken" placeholder="ghp_..." autocomplete="off" />
+      <label class="login-remember"><input type="checkbox" id="loginRemember" /> Запамʼятати токен</label>
       <button type="button" id="btnLogin">Війти</button>
       <div id="loginError"></div>
       <p class="help">Токен створюється в GitHub → Settings → Developer settings → Personal access tokens. Не діліться ним з іншими.</p>
@@ -173,6 +179,10 @@
                 <option value="hero">Hero</option>
                 <option value="about">Про нас</option>
                 <option value="footer">Футер</option>
+                <option value="products">Товари</option>
+                <option value="gallery">Галерея</option>
+                <option value="contacts">Контакти</option>
+                <option value="social">Соцмережі</option>
               </select>
             </div>
             <div id="editorFields"></div>
@@ -241,6 +251,21 @@
       telegramUrl: 'https://t.me/gronoliubovi',
       footerText: 'Гроно любові — Поділля. Зв\'яжіться з нами через Telegram.',
       contactLine: 'Поділля, Україна'
+    },
+    products: [
+      { id: '1', title: 'Мед «Гроно любові»', description: 'Натуральний мед з пасіки.', price: '150 грн', image: '/images/honey-jar-grono-liubovi.png', order: 0 }
+    ],
+    gallery: [
+      { image: '/images/vineyard-lavender-field.png', caption: 'Виноградник і лаванда' }
+    ],
+    contacts: {
+      phone: '',
+      email: '',
+      address: 'Поділля, Україна'
+    },
+    social: {
+      instagram: '',
+      facebook: ''
     }
   };
 
@@ -248,6 +273,7 @@
   var data = JSON.parse(JSON.stringify(defaultContent));
   var contentSha = null;
   var recentUploadedUrls = [];
+  var currentSection = 'site';
 
   function getToken() {
     try { return sessionStorage.getItem('gronoliubovi_admin_token') || ''; } catch (e) { return ''; }
@@ -295,7 +321,9 @@
     try { sessionStorage.removeItem('gronoliubovi_admin_token'); } catch (e) {}
     document.getElementById('loginScreen').classList.remove('hidden');
     document.getElementById('adminPanel').classList.remove('visible');
-    document.getElementById('loginToken').value = '';
+    var remembered = '';
+    try { remembered = localStorage.getItem('gronoliubovi_remember_token') || ''; } catch (e) {}
+    document.getElementById('loginToken').value = remembered;
     showLoginError('');
   }
 
@@ -310,6 +338,14 @@
       if (!r.ok) return r.json().then(function (j) { throw new Error(j.message || 'Помилка доступу'); });
       return r.json();
     }).then(function () {
+      try {
+        var rem = document.getElementById('loginRemember');
+        if (rem && rem.checked) {
+          localStorage.setItem('gronoliubovi_remember_token', token);
+        } else {
+          localStorage.removeItem('gronoliubovi_remember_token');
+        }
+      } catch (e) {}
       enterAdmin(token);
     }).catch(function (err) {
       showLoginError(err.message || 'Невірний токен або немає доступу до репо.');
@@ -351,8 +387,69 @@
       html += '<div class="field"><label>Посилання на Telegram</label><input type="text" id="f_telegramUrl" value="' + escapeAttr(s.telegramUrl) + '" /></div>';
       html += '<div class="field"><label>Текст у футері</label><textarea id="f_footerText">' + escapeHtml(s.footerText || '') + '</textarea></div>';
       html += '<div class="field"><label>Контактний рядок (адреса)</label><input type="text" id="f_contactLine" value="' + escapeAttr(s.contactLine) + '" /></div>';
+    } else if (section === 'products') {
+      var list = Array.isArray(s) ? s : [];
+      list.forEach(function (p, i) {
+        p = p || {};
+        html += '<div class="item-block" data-index="' + i + '"><button type="button" class="btn-secondary btn-small remove-item">Видалити</button>';
+        html += '<div class="field"><label>Назва</label><input type="text" id="f_product_' + i + '_title" value="' + escapeAttr(p.title) + '" /></div>';
+        html += '<div class="field"><label>Опис</label><textarea id="f_product_' + i + '_description">' + escapeHtml(p.description || '') + '</textarea></div>';
+        html += '<div class="field"><label>Ціна</label><input type="text" id="f_product_' + i + '_price" value="' + escapeAttr(p.price) + '" /></div>';
+        html += '<div class="field"><label>URL зображення</label><input type="text" id="f_product_' + i + '_image" value="' + escapeAttr(p.image) + '" /></div>';
+        html += '<div class="field"><label>Порядок</label><input type="number" id="f_product_' + i + '_order" value="' + (p.order != null ? p.order : i) + '" style="width:80px" /></div></div>';
+      });
+      html += '<button type="button" class="btn-secondary add-item-btn" id="btnAddProduct">+ Додати товар</button>';
+    } else if (section === 'gallery') {
+      var list = Array.isArray(s) ? s : [];
+      list.forEach(function (g, i) {
+        g = g || {};
+        html += '<div class="item-block" data-index="' + i + '"><button type="button" class="btn-secondary btn-small remove-item">Видалити</button>';
+        html += '<div class="field"><label>URL зображення</label><input type="text" id="f_gallery_' + i + '_image" value="' + escapeAttr(g.image) + '" /></div>';
+        html += '<div class="field"><label>Підпис</label><input type="text" id="f_gallery_' + i + '_caption" value="' + escapeAttr(g.caption) + '" /></div></div>';
+      });
+      html += '<button type="button" class="btn-secondary add-item-btn" id="btnAddGallery">+ Додати фото</button>';
+    } else if (section === 'contacts') {
+      html += '<div class="field"><label>Телефон</label><input type="text" id="f_phone" value="' + escapeAttr(s.phone) + '" /></div>';
+      html += '<div class="field"><label>Email</label><input type="email" id="f_email" value="' + escapeAttr(s.email) + '" /></div>';
+      html += '<div class="field"><label>Адреса</label><textarea id="f_address">' + escapeHtml(s.address || '') + '</textarea></div>';
+    } else if (section === 'social') {
+      html += '<div class="field"><label>Instagram (URL)</label><input type="text" id="f_instagram" value="' + escapeAttr(s.instagram) + '" placeholder="https://instagram.com/..." /></div>';
+      html += '<div class="field"><label>Facebook (URL)</label><input type="text" id="f_facebook" value="' + escapeAttr(s.facebook) + '" placeholder="https://facebook.com/..." /></div>';
     }
     document.getElementById('editorFields').innerHTML = html;
+    currentSection = section;
+    if (section === 'products') {
+      document.getElementById('btnAddProduct').addEventListener('click', function () {
+        collectFields();
+        data.products = data.products || [];
+        data.products.push({ id: String(Date.now()), title: '', description: '', price: '', image: '', order: data.products.length });
+        renderFields();
+      });
+      document.querySelectorAll('#editorFields .item-block .remove-item').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var i = parseInt(btn.closest('.item-block').getAttribute('data-index'), 10);
+          collectFields();
+          data.products.splice(i, 1);
+          renderFields();
+        });
+      });
+    }
+    if (section === 'gallery') {
+      document.getElementById('btnAddGallery').addEventListener('click', function () {
+        collectFields();
+        data.gallery = data.gallery || [];
+        data.gallery.push({ image: '', caption: '' });
+        renderFields();
+      });
+      document.querySelectorAll('#editorFields .item-block .remove-item').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var i = parseInt(btn.closest('.item-block').getAttribute('data-index'), 10);
+          collectFields();
+          data.gallery.splice(i, 1);
+          renderFields();
+        });
+      });
+    }
     var imgInput = document.getElementById('f_image');
     if (imgInput) {
       imgInput.addEventListener('input', function () {
@@ -364,8 +461,8 @@
   function escapeAttr(s) { return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
   function escapeHtml(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
-  function collectFields() {
-    var section = document.getElementById('section').value;
+  function collectFields(fromSection) {
+    var section = fromSection !== undefined ? fromSection : document.getElementById('section').value;
     var s = data[section] || {};
     if (section === 'site') {
       s.title = (document.getElementById('f_title') || {}).value.trim();
@@ -385,6 +482,41 @@
       s.telegramUrl = (document.getElementById('f_telegramUrl') || {}).value.trim();
       s.footerText = (document.getElementById('f_footerText') || {}).value.trim();
       s.contactLine = (document.getElementById('f_contactLine') || {}).value.trim();
+    } else if (section === 'products') {
+      var out = [];
+      for (var i = 0; i < 999; i++) {
+        var titleEl = document.getElementById('f_product_' + i + '_title');
+        if (!titleEl) break;
+        out.push({
+          id: (data.products && data.products[i] && data.products[i].id) || String(i),
+          title: titleEl.value.trim(),
+          description: (document.getElementById('f_product_' + i + '_description') || {}).value.trim(),
+          price: (document.getElementById('f_product_' + i + '_price') || {}).value.trim(),
+          image: (document.getElementById('f_product_' + i + '_image') || {}).value.trim(),
+          order: parseInt((document.getElementById('f_product_' + i + '_order') || {}).value, 10) || i
+        });
+      }
+      data.products = out;
+      return;
+    } else if (section === 'gallery') {
+      var out = [];
+      for (var j = 0; j < 999; j++) {
+        var imgEl = document.getElementById('f_gallery_' + j + '_image');
+        if (!imgEl) break;
+        out.push({
+          image: imgEl.value.trim(),
+          caption: (document.getElementById('f_gallery_' + j + '_caption') || {}).value.trim()
+        });
+      }
+      data.gallery = out;
+      return;
+    } else if (section === 'contacts') {
+      s.phone = (document.getElementById('f_phone') || {}).value.trim();
+      s.email = (document.getElementById('f_email') || {}).value.trim();
+      s.address = (document.getElementById('f_address') || {}).value.trim();
+    } else if (section === 'social') {
+      s.instagram = (document.getElementById('f_instagram') || {}).value.trim();
+      s.facebook = (document.getElementById('f_facebook') || {}).value.trim();
     }
     data[section] = s;
   }
@@ -431,7 +563,8 @@
   }
 
   document.getElementById('section').addEventListener('change', function () {
-    collectFields();
+    collectFields(currentSection);
+    currentSection = document.getElementById('section').value;
     renderFields();
   });
 
@@ -459,6 +592,10 @@
           data = JSON.parse(decoded);
           if (!data.site) data.site = defaultContent.site;
           if (!data.site.ogDescription) data.site.ogDescription = data.site.description || '';
+          if (!Array.isArray(data.products)) data.products = defaultContent.products.slice();
+          if (!Array.isArray(data.gallery)) data.gallery = defaultContent.gallery.slice();
+          if (!data.contacts || typeof data.contacts !== 'object') data.contacts = Object.assign({}, defaultContent.contacts);
+          if (!data.social || typeof data.social !== 'object') data.social = Object.assign({}, defaultContent.social);
           contentSha = json.sha;
           renderFields();
           syncRawJson();
@@ -559,20 +696,22 @@
     });
     list.querySelectorAll('.insert-hero').forEach(function (btn) {
       btn.addEventListener('click', function () {
+        collectFields(currentSection);
         data.hero = data.hero || {};
         data.hero.image = btn.getAttribute('data-url');
+        currentSection = 'hero';
         document.getElementById('section').value = 'hero';
-        collectFields();
         renderFields();
         showStatus('editorStatus', 'URL вставлено в Hero.', 'success');
       });
     });
     list.querySelectorAll('.insert-about').forEach(function (btn) {
       btn.addEventListener('click', function () {
+        collectFields(currentSection);
         data.about = data.about || {};
         data.about.image = btn.getAttribute('data-url');
+        currentSection = 'about';
         document.getElementById('section').value = 'about';
-        collectFields();
         renderFields();
         showStatus('editorStatus', 'URL вставлено в Про нас.', 'success');
       });
@@ -650,7 +789,18 @@
     refreshDeployStatus();
   }
 
-  // Завжди спочатку показувати екран авторизації; панель — лише після успішного входу по ключу
+  // При відкритті сторінки: якщо токен було збережено — підставити в поле і відмітити «Запамʼятати»
+  (function initLoginRemember() {
+    try {
+      var saved = localStorage.getItem('gronoliubovi_remember_token');
+      if (saved && saved.length > 10) {
+        var input = document.getElementById('loginToken');
+        var check = document.getElementById('loginRemember');
+        if (input) input.value = saved;
+        if (check) check.checked = true;
+      }
+    } catch (e) {}
+  })();
 })();
   </script>
 </body>
