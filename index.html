@@ -18,5 +18,21 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      (function() {
+        function applyContent(data) {
+          if (!data || !data.hero || !data.hero.image) return;
+          var heroSrc = data.hero.image;
+          if (heroSrc.indexOf('http') !== 0 && heroSrc.indexOf('/') !== 0) heroSrc = '/' + heroSrc;
+          var heroImg = document.querySelector('img[src*="grapes-vine-closeup"]') || document.querySelector('#root section img');
+          if (heroImg) heroImg.src = heroSrc;
+        }
+        function run() {
+          fetch('content/site-content.json').then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }).then(applyContent);
+        }
+        if (document.readyState === 'complete') setTimeout(run, 100);
+        else window.addEventListener('load', function() { setTimeout(run, 100); });
+      })();
+    </script>
   </body>
 </html>

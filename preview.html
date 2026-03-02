@@ -32,13 +32,16 @@
       function imgUrl(url) {
         if (!url) return '';
         if (url.indexOf('http') === 0) return url;
-        return url.indexOf('/') === 0 ? url : '/' + url;
+        var path = url.indexOf('/') === 0 ? url : '/' + url;
+        var origin = window.location.origin || (window.location.protocol + '//' + window.location.host);
+        return origin + path;
       }
-      function sectionImg(label, url) {
+      function sectionImg(label, url, sectionName) {
         if (!url) return '<p class="muted">URL не задано</p>';
-        var src = esc(imgUrl(url));
+        var src = imgUrl(url);
+        var errMsg = (sectionName ? sectionName + ': ' : '') + 'Помилка завантаження зображення. Перевірте, чи файл є на сервері та чи правильний шлях у JSON.';
         return '<p class="muted" style="margin-bottom:8px">URL: <code>' + esc(url) + '</code></p>' +
-          '<img src="' + src + '" alt="' + esc(label) + '" onerror="this.outerHTML=\'<p class="img-error">Помилка завантаження зображення. Перевірте URL.</p>\'" />';
+          '<img src="' + esc(src) + '" alt="' + esc(label) + '" onerror="this.outerHTML=\'<p class="img-error">' + esc(errMsg) + '</p>\'" />';
       }
       fetch('content/site-content.json').then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }).then(function(data) {
         if (!data) {
@@ -48,9 +51,9 @@
         var hero = data.hero || {}, about = data.about || {};
         root.innerHTML =
           '<h1>Перегляд збереженого контенту</h1>' +
-          '<section><h2>Hero — зображення</h2>' + sectionImg('Hero', hero.image) + '</section>' +
+          '<section><h2>Hero — зображення</h2>' + sectionImg('Hero', hero.image, 'Hero') + '</section>' +
           '<section><h2>Hero — заголовок</h2><p>' + esc(hero.title || '—') + '</p><p class="muted">' + esc(hero.subtitle || '') + '</p></section>' +
-          '<section><h2>Про нас — зображення</h2>' + sectionImg('Про нас', about.image) + '</section>' +
+          '<section><h2>Про нас — зображення</h2>' + sectionImg('Про нас', about.image, 'Про нас') + '</section>' +
           '<section><h2>Про нас — заголовок і текст</h2><p><strong>' + esc(about.title || '—') + '</strong></p><p>' + esc(about.body || '') + '</p></section>' +
           '<p style="margin-top:24px" class="muted"><a href="/admin/">Повернутися в адмінку</a></p>';
       });
